@@ -8,22 +8,31 @@
         <VerticalStackLayout Padding="0" Spacing="0" BackgroundColor="LightGray">
 
             <!-- Top Bar -->
-            <Grid BackgroundColor="Black" Padding="10" RowDefinitions="Auto" ColumnDefinitions="*,Auto">
-                <!-- Left links -->
-                <HorizontalStackLayout Spacing="20">
-                    <Label Text="Live" TextColor="White"/>
-                    <Label Text="Schedule" TextColor="White"/>
-                    <Label Text="News" TextColor="White"/>
-                </HorizontalStackLayout>
+            <!-- Main Navigation -->
+            <Grid BackgroundColor="White" Padding="15" ColumnDefinitions="*,Auto" RowDefinitions="Auto" Margin="0,0,0,2" >
 
-                <!-- Right links -->
-                <HorizontalStackLayout Spacing="20" Grid.Column="1">
-                    <Label Text="🔍 Search" TextColor="White"/>
-                    <Label Text="👤 Login" TextColor="White"/>
-                    <Frame BackgroundColor="#FBBF24" Padding="10,5" CornerRadius="8" HasShadow="False">
-                        <Label Text="Subscribe" TextColor="Black" FontAttributes="Bold"/>
-                    </Frame>
+                <!-- Left side: Logo & Navigation -->
+                <HorizontalStackLayout Spacing="30">
+                    <!-- Logo -->
+                    <Label Text="JUDO">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="JUDO" FontSize="24" FontAttributes="Bold" TextColor="Black"/>
+                                <Span Text="TV" FontSize="24" FontAttributes="Bold" TextColor="#FBBF24"/>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+
+                    <!-- Navigation -->
+                    <HorizontalStackLayout Spacing="20" VerticalOptions="Center">
+                        <Button Text="Watch" BackgroundColor="Transparent" TextColor="Black"/>
+                        <Button Text="Events" BackgroundColor="Transparent" TextColor="Black"/>
+                        <Button Text="Athletes" BackgroundColor="Transparent" TextColor="Black"/>
+                        <Button Text="Rankings" BackgroundColor="Transparent" TextColor="Black"/>
+                        <Button Text="Learn" BackgroundColor="Transparent" TextColor="Black"/>
+                    </HorizontalStackLayout>
                 </HorizontalStackLayout>
+  
             </Grid>
 
         </VerticalStackLayout>
