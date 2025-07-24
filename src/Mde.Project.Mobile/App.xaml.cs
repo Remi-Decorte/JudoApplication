@@ -6,7 +6,7 @@
         {
             InitializeComponent();
 
-            MainPage = new NavigationPage(new Pages.HomePage());
+            MainPage = new AppShell();
         }
     }
 }

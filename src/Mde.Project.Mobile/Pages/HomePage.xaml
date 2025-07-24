@@ -67,6 +67,13 @@
                 </VerticalStackLayout>
             </Grid>
 
+            <Grid>
+                <VerticalStackLayout>
+                    <Label Text="Aankomende wedstrijden" FontAttributes="Bold" FontSize="20" Margin="0,20,0,10" />
+                    <StackLayout x:Name="EventsStack" />
+                </VerticalStackLayout>
+            </Grid>
+
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
