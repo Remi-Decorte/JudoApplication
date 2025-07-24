@@ -5,6 +5,8 @@ VisualStudioVersion = 17.11.35208.52
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mde.Project.Mobile", "Mde.Project.Mobile\Mde.Project.Mobile.csproj", "{354D7013-A8D4-4E60-B232-EDC332FD8069}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mde.Project.WebApi", "Mde.Project.WebApi\Mde.Project.WebApi.csproj", "{7B70F814-BB57-4C79-9377-4FCB7A9E9266}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,6 +19,10 @@ Global
 		{354D7013-A8D4-4E60-B232-EDC332FD8069}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{354D7013-A8D4-4E60-B232-EDC332FD8069}.Release|Any CPU.Build.0 = Release|Any CPU
 		{354D7013-A8D4-4E60-B232-EDC332FD8069}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{7B70F814-BB57-4C79-9377-4FCB7A9E9266}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B70F814-BB57-4C79-9377-4FCB7A9E9266}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B70F814-BB57-4C79-9377-4FCB7A9E9266}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B70F814-BB57-4C79-9377-4FCB7A9E9266}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
