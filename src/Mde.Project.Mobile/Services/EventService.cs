@@ -11,7 +11,7 @@ public class EventService
     {
         _httpClient = new HttpClient
         {
-            BaseAddress = new Uri("/") 
+            BaseAddress = new Uri("https://localhost:62160/")
         };
     }
 
