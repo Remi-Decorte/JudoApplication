@@ -8,8 +8,8 @@ namespace Mde.Project.Mobile.Models
 {
     public class EventModel
     {
-        public string Title { get; set; }
-        public string Location { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
         public DateTime Date { get; set; }
     }
 }
