@@ -1,9 +1,9 @@
 namespace Mde.Project.Mobile.Pages;
 
-public partial class NewPage1 : ContentPage
+public partial class HomePage : ContentPage
 {
-	public NewPage1()
+	public HomePage()
 	{
-		InitializeComponent();
+        InitializeComponent();
 	}
 }
