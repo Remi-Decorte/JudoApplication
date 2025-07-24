@@ -32,7 +32,39 @@
                         <Button Text="Learn" BackgroundColor="Transparent" TextColor="Black"/>
                     </HorizontalStackLayout>
                 </HorizontalStackLayout>
-  
+            </Grid>
+
+            <Grid HeightRequest="400" BackgroundColor="Black">
+
+                <VerticalStackLayout Padding="20" VerticalOptions="Center">
+                    <Frame BackgroundColor="#FBBF24"
+               Padding="10,5"
+               CornerRadius="20"
+               HorizontalOptions="Start">
+                        <Label Text="LIVE NOW" TextColor="Black" FontAttributes="Bold" FontSize="12"/>
+                    </Frame>
+
+                    <Label Text="World Judo Championships 2023"
+               FontSize="32"
+               FontAttributes="Bold"
+               TextColor="White"
+               Margin="0,10,0,5"/>
+
+                    <Label Text="Watch the best judokas from around the world compete for the ultimate title."
+               FontSize="16"
+               TextColor="White"
+               Margin="0,0,0,20"/>
+
+                    <HorizontalStackLayout Spacing="15">
+                        <Frame BackgroundColor="#FBBF24" CornerRadius="8" HasShadow="False" Padding="15,10">
+                            <Label Text="▶ Watch Live" TextColor="Black" FontAttributes="Bold"/>
+                        </Frame>
+
+                        <Frame BorderColor="White" BackgroundColor="Transparent" CornerRadius="8" HasShadow="False" Padding="15,10">
+                            <Label Text="Schedule" TextColor="White" FontAttributes="Bold"/>
+                        </Frame>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
             </Grid>
 
         </VerticalStackLayout>
