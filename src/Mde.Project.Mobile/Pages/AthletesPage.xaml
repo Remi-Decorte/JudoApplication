@@ -12,7 +12,7 @@
     <ScrollView>
         <VerticalStackLayout Padding="0" Spacing="0" BackgroundColor="LightGray">
 
-            <!-- Kopie van Header HomePage -->
+            <!-- Kopie van header -->
             <Grid BackgroundColor="White" Padding="15" ColumnDefinitions="*,Auto" RowDefinitions="Auto" Margin="0,0,0,2">
                 <HorizontalStackLayout Spacing="30">
                     <Label Text="JUDO">
@@ -34,7 +34,28 @@
                 </HorizontalStackLayout>
             </Grid>
 
-            <!-- Later komt hier de CollectionView voor judoka’s -->
+            <!-- Categorie-selector -->
+            <HorizontalStackLayout Padding="10" Spacing="10">
+                <Label Text="Categorie:" FontAttributes="Bold" />
+                <Picker ItemsSource="{Binding Categories}"
+                        SelectedItem="{Binding SelectedCategory}" />
+            </HorizontalStackLayout>
+
+            <!-- Judoka lijst -->
+            <CollectionView ItemsSource="{Binding Judokas}" Margin="10">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame BackgroundColor="White" Padding="15" CornerRadius="10" Margin="5" HasShadow="True">
+                            <VerticalStackLayout>
+                                <Label Text="{Binding FullName}" FontSize="18" FontAttributes="Bold" />
+                                <Label Text="{Binding Country}" FontSize="14" TextColor="Gray" />
+                                <Label Text="{Binding Category}" FontSize="12" TextColor="#FBBF24" />
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
