@@ -8,6 +8,6 @@
         public DateTime Date { get; set; }
         public string Type { get; set; } = string.Empty; 
 
-       // public ICollection<TechniqueScore> TechniqueScores { get; set; } = new List<TechniqueScore>();
+        public ICollection<TechniqueScore> TechniqueScores { get; set; } = new List<TechniqueScore>();
     }
 }
