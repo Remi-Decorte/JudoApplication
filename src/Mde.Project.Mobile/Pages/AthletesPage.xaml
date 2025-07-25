@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Mde.Project.Mobile.ViewModels"
+             x:Class="Mde.Project.Mobile.Pages.AthletesPage"
+             Title="Athletes">
+
+    <ContentPage.BindingContext>
+        <vm:AthletesViewModel />
+    </ContentPage.BindingContext>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="0" Spacing="0" BackgroundColor="LightGray">
+
+            <!-- Kopie van header -->
+            <Grid BackgroundColor="White" Padding="15" ColumnDefinitions="*,Auto" RowDefinitions="Auto" Margin="0,0,0,2">
+                <HorizontalStackLayout Spacing="30">
+                    <Label Text="JUDO">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="JUDO" FontSize="24" FontAttributes="Bold" TextColor="Black"/>
+                                <Span Text="TV" FontSize="24" FontAttributes="Bold" TextColor="#FBBF24"/>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+
+                    <HorizontalStackLayout Spacing="20" VerticalOptions="Center">
+                        <Button Text="Watch" BackgroundColor="Transparent" TextColor="Black"/>
+                        <Button Text="Events" BackgroundColor="Transparent" TextColor="Black"/>
+                        <Button Text="Athletes" BackgroundColor="Transparent" TextColor="Black"/>
+                        <Button Text="Rankings" BackgroundColor="Transparent" TextColor="Black"/>
+                        <Button Text="Learn" BackgroundColor="Transparent" TextColor="Black"/>
+                    </HorizontalStackLayout>
+                </HorizontalStackLayout>
+            </Grid>
+
+            <!-- Categorie-selector -->
+            <HorizontalStackLayout Padding="10" Spacing="10">
+                <Label Text="Categorie:" FontAttributes="Bold" />
+                <Picker ItemsSource="{Binding Categories}"
+                        SelectedItem="{Binding SelectedCategory}" />
+            </HorizontalStackLayout>
+
+            <!-- Judoka lijst -->
+            <CollectionView ItemsSource="{Binding Judokas}" Margin="10">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame BackgroundColor="White" Padding="15" CornerRadius="10" Margin="5" HasShadow="True">
+                            <VerticalStackLayout>
+                                <Label Text="{Binding FullName}" FontSize="18" FontAttributes="Bold" />
+                                <Label Text="{Binding Country}" FontSize="14" TextColor="Gray" />
+                                <Label Text="{Binding Category}" FontSize="12" TextColor="#FBBF24" />
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

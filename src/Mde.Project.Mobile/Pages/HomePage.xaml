@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Mde.Project.Mobile.ViewModels"
+             x:Class="Mde.Project.Mobile.Pages.HomePage"
+             Title="Home">
+
+    <ContentPage.BindingContext>
+        <vm:HomePageViewModel />
+    </ContentPage.BindingContext>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="0" Spacing="0" BackgroundColor="LightGray">
+
+            <!-- Top Bar -->
+            <Grid BackgroundColor="White" Padding="15" ColumnDefinitions="*,Auto" RowDefinitions="Auto" Margin="0,0,0,2">
+                <HorizontalStackLayout Spacing="30">
+                    <!-- Logo -->
+                    <Label>
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="JUDO" FontSize="24" FontAttributes="Bold" TextColor="Black"/>
+                                <Span Text="TV" FontSize="24" FontAttributes="Bold" TextColor="#FBBF24"/>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+
+                    <!-- Navigatieknoppen -->
+                    <HorizontalStackLayout Spacing="20" VerticalOptions="Center">
+                        <Button Text="Watch" BackgroundColor="Transparent" TextColor="Black"/>
+                        <Button Text="Events" BackgroundColor="Transparent" TextColor="Black"/>
+                        <Button Text="Athletes"
+                                BackgroundColor="Transparent"
+                                TextColor="Black"
+                                Clicked="NavigateToAthletes" />
+                        <Button Text="Rankings" BackgroundColor="Transparent" TextColor="Black"/>
+                        <Button Text="Learn" BackgroundColor="Transparent" TextColor="Black"/>
+                    </HorizontalStackLayout>
+                </HorizontalStackLayout>
+            </Grid>
+
+            <!-- Banner -->
+            <Grid HeightRequest="400" BackgroundColor="Black">
+                <VerticalStackLayout Padding="20" VerticalOptions="Center">
+                    <Frame BackgroundColor="#FBBF24" Padding="10,5" CornerRadius="20" HorizontalOptions="Start">
+                        <Label Text="LIVE NOW" TextColor="Black" FontAttributes="Bold" FontSize="12"/>
+                    </Frame>
+
+                    <Label Text="World Judo Championships 2023"
+                           FontSize="32"
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           Margin="0,10,0,5"/>
+
+                    <Label Text="Watch the best judokas from around the world compete for the ultimate title."
+                           FontSize="16"
+                           TextColor="White"
+                           Margin="0,0,0,20"/>
+
+                    <HorizontalStackLayout Spacing="15">
+                        <Frame BackgroundColor="#FBBF24" CornerRadius="8" HasShadow="False" Padding="15,10">
+                            <Label Text="▶ Watch Live" TextColor="Black" FontAttributes="Bold"/>
+                        </Frame>
+                        <Frame BorderColor="White" BackgroundColor="Transparent" CornerRadius="8" HasShadow="False" Padding="15,10">
+                            <Label Text="Schedule" TextColor="White" FontAttributes="Bold"/>
+                        </Frame>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Grid>
+
+            <!-- Events List -->
+            <Grid>
+                <VerticalStackLayout>
+                    <Label Text="Aankomende wedstrijden" FontAttributes="Bold" FontSize="20" Margin="0,20,0,10" />
+
+                    <CollectionView ItemsSource="{Binding Events}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Frame Margin="5" Padding="10" BackgroundColor="White" CornerRadius="8" HasShadow="True">
+                                    <VerticalStackLayout>
+                                        <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="16" TextColor="Black" />
+                                        <Label Text="{Binding Location}" FontSize="14" TextColor="Gray"/>
+                                        <Label Text="{Binding Date, StringFormat='{}{0:dd/MM/yyyy}'}" FontSize="14" TextColor="Gray"/>
+                                    </VerticalStackLayout>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
