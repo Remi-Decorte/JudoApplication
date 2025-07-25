@@ -19,4 +19,10 @@ public partial class HomePage : ContentPage
             await viewModel.LoadEventsAsync();
         }
     }
+
+    private async void NavigateToAthletes(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync("//athletes");
+    }
+
 }

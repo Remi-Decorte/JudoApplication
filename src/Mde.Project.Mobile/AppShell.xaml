@@ -18,4 +18,9 @@
         Route="home"
         ContentTemplate="{DataTemplate pages:HomePage}" />
 
+    <ShellContent
+    Title="Athletes"
+    Route="athletes"
+    ContentTemplate="{DataTemplate pages:AthletesPage}" />
+
 </Shell>

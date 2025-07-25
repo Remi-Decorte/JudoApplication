@@ -15,7 +15,8 @@
             <!-- Top Bar -->
             <Grid BackgroundColor="White" Padding="15" ColumnDefinitions="*,Auto" RowDefinitions="Auto" Margin="0,0,0,2">
                 <HorizontalStackLayout Spacing="30">
-                    <Label Text="JUDO">
+                    <!-- Logo -->
+                    <Label>
                         <Label.FormattedText>
                             <FormattedString>
                                 <Span Text="JUDO" FontSize="24" FontAttributes="Bold" TextColor="Black"/>
@@ -24,10 +25,14 @@
                         </Label.FormattedText>
                     </Label>
 
+                    <!-- Navigatieknoppen -->
                     <HorizontalStackLayout Spacing="20" VerticalOptions="Center">
                         <Button Text="Watch" BackgroundColor="Transparent" TextColor="Black"/>
                         <Button Text="Events" BackgroundColor="Transparent" TextColor="Black"/>
-                        <Button Text="Athletes" BackgroundColor="Transparent" TextColor="Black"/>
+                        <Button Text="Athletes"
+                                BackgroundColor="Transparent"
+                                TextColor="Black"
+                                Clicked="NavigateToAthletes" />
                         <Button Text="Rankings" BackgroundColor="Transparent" TextColor="Black"/>
                         <Button Text="Learn" BackgroundColor="Transparent" TextColor="Black"/>
                     </HorizontalStackLayout>
