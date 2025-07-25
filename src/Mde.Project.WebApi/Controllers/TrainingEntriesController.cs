@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Mde.Project.WebApi.Data;
 using Mde.Project.WebApi.Entities;
 using Microsoft.EntityFrameworkCore;
+using Mde.Project.WebApi.DTOs.Requests;
 
 namespace Mde.Project.WebApi.Controllers;
 
@@ -34,6 +35,34 @@ public class TrainingEntriesController : ControllerBase
             .ToListAsync();
 
         return Ok(entries);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateTrainingEntry([FromBody] CreateTrainingEntryRequest request)
+    {
+        string? userId = User?.Identity?.Name;
+
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var entry = new TrainingEntry
+        {
+            UserId = userId,
+            Date = request.Date,
+            Type = request.Type,
+            TechniqueScores = request.Type.ToLower() == "randori"
+                ? request.TechniqueScores.Select(s => new TechniqueScore
+                {
+                    Technique = s.Technique,
+                    ScoreCount = s.ScoreCount
+                }).ToList()
+                : new List<TechniqueScore>()
+        };
+
+        _dbContext.TrainingEntries.Add(entry);
+        await _dbContext.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetForLoggedInUser), new { id = entry.Id }, entry);
     }
 }
 
