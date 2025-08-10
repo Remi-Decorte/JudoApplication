@@ -1,4 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
+using Mde.Project.Mobile.Services;  
+using Mde.Project.Mobile.Services.Interfaces;
+using Mde.Project.Mobile.ViewModels;
+using Mde.Project.Mobile.Pages;
 
 namespace Mde.Project.Mobile
 {
@@ -15,6 +19,15 @@ namespace Mde.Project.Mobile
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
+            //services 
+             builder.Services.AddSingleton<ITrainingService, TrainingService>();
+
+            //viewmodels
+             builder.Services.AddTransient<AgendaViewModel>();
+
+            //Pages 
+            builder.Services.AddTransient<AgendaPage>();
+            
 #if DEBUG
     		builder.Logging.AddDebug();
 #endif
