@@ -1,6 +1,6 @@
 using System.Text;
 using System.Text.Json;
-// using System.Net.Http.Json; // <- is voor API
+using System.Net.Http.Json;
 using Mde.Project.Mobile.Models;
 using Mde.Project.Mobile.Services.Interfaces;
 
@@ -8,14 +8,19 @@ namespace Mde.Project.Mobile.Services
 {
     public class TrainingService : ITrainingService
     {
-        private readonly HttpClient _httpClient = new()
+        private readonly HttpClient _httpClient;
+
+        public TrainingService()
         {
-            BaseAddress = new Uri("https://localhost:62160/")
-        };
+            _httpClient = new HttpClient
+            {
+                BaseAddress = new Uri("https://localhost:62160/") 
+            };
+        }
 
         public async Task<List<TrainingEntryModel>> GetTrainingsAsync(string jwtToken)
         {
-            //-API in comment gezet als ik api wil gebruiken dit uit comment halen
+            // normale API call voor als we geen MOCK data gebruiken maar api
             /*
             try
             {
@@ -30,7 +35,28 @@ namespace Mde.Project.Mobile.Services
                 return new List<TrainingEntryModel>();
             }
             */
-            return new();
+
+            // MOCK DATA
+            await Task.Delay(500); // Simuleer wachttijd
+            return new List<TrainingEntryModel>
+            {
+                new TrainingEntryModel
+                {
+                    Date = DateTime.Today,
+                    Type = "Randori training",
+                    TechniqueScores = new List<TechniqueScoreModel>
+                    {
+                        new TechniqueScoreModel { Technique = "Uchi mata", ScoreCount = 3 },
+                        new TechniqueScoreModel { Technique = "Seoi nage", ScoreCount = 2 }
+                    }
+                },
+                new TrainingEntryModel
+                {
+                    Date = DateTime.Today.AddDays(-1),
+                    Type = "Kracht training",
+                    TechniqueScores = new List<TechniqueScoreModel>()
+                }
+            };
         }
 
         public async Task<bool> CreateTrainingAsync(TrainingEntryModel model, string jwtToken)
@@ -43,6 +69,7 @@ namespace Mde.Project.Mobile.Services
 
                 var content = new StringContent(JsonSerializer.Serialize(model), Encoding.UTF8, "application/json");
                 var response = await _httpClient.PostAsync("api/trainingentries", content);
+
                 return response.IsSuccessStatusCode;
             }
             catch
@@ -50,7 +77,9 @@ namespace Mde.Project.Mobile.Services
                 return false;
             }
             */
-            return false; // placeholder voor MOCK
+
+            await Task.Delay(300);
+            return true; // Altijd succes bij mock
         }
     }
 }
