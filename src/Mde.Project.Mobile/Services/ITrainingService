@@ -1,0 +1,10 @@
+using Mde.Project.Mobile.Models;
+
+namespace Mde.Project.Mobile.Services.Interfaces
+{
+    public interface ITrainingService
+    {
+        Task<List<TrainingEntryModel>> GetTrainingsAsync(string jwtToken);
+        Task<bool> CreateTrainingAsync(TrainingEntryModel model, string jwtToken);
+    }
+}
