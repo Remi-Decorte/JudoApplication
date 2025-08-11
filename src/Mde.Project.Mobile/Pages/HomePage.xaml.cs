@@ -1,28 +1,35 @@
 using Mde.Project.Mobile.ViewModels;
 
-namespace Mde.Project.Mobile.Pages;
-
-public partial class HomePage : ContentPage
+namespace Mde.Project.Mobile.Pages
 {
-    public HomePage()
+    public partial class HomePage : ContentPage
     {
-        InitializeComponent();
-        BindingContext = new HomePageViewModel();
-    }
+        private readonly HomePageViewModel _vm;
 
-    protected override async void OnAppearing()
-    {
-        base.OnAppearing();
-
-        if (BindingContext is HomePageViewModel viewModel)
+        //DI 
+        public HomePage(HomePageViewModel vm)
         {
-            await viewModel.LoadEventsAsync();
+            InitializeComponent();
+            _vm = vm;
+            BindingContext = _vm;
+        }
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            await _vm.LoadEventsAsync();
+        }
+
+        private async void NavigateToAthletes(object sender, EventArgs e)
+        {
+            var page = Application.Current.Services.GetRequiredService<AthletesPage>();
+            await Navigation.PushAsync(page);
+        }
+
+        private async void NavigateToAgenda(object sender, EventArgs e)
+        {
+            var page = Application.Current.Services.GetRequiredService<AgendaPage>();
+            await Navigation.PushAsync(page);
         }
     }
-
-    private async void NavigateToAthletes(object sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("//athletes");
-    }
-
 }
