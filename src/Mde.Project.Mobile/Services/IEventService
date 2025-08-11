@@ -1,0 +1,9 @@
+using Mde.Project.Mobile.Models;
+
+namespace Mde.Project.Mobile.Services
+{
+    public interface IEventService
+    {
+        Task<List<EventModel>> GetUpcomingEventsAsync();
+    }
+}
