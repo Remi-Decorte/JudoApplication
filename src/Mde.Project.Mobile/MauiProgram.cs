@@ -23,14 +23,24 @@ namespace Mde.Project.Mobile
             // Services
             // MOCK:
             builder.Services.AddSingleton<ITrainingService, MockTrainingService>();
+            builder.Services.AddSingleton<IAuthService,     MockAuthService>();
+            builder.Services.AddSingleton<IEventService,    MockEventService>();
+            builder.Services.AddSingleton<IJudokaService,   MockJudokaService>();
             // voor echte API vervang bovenste door
             // builder.Services.AddSingleton<ITrainingService, TrainingService>();
 
-            //ViewModels 
+            
+            // ViewModels
             builder.Services.AddTransient<AgendaViewModel>();
+            // builder.Services.AddTransient<LoginViewModel>();
+            // builder.Services.AddTransient<HomePageViewModel>();
+            // builder.Services.AddTransient<AthletesPageViewModel>();
 
-            //Pages
+            // Pages
             builder.Services.AddTransient<AgendaPage>();
+            // builder.Services.AddTransient<LoginPage>();
+            // builder.Services.AddTransient<HomePage>();
+            // builder.Services.AddTransient<AthletesPage>();
 
 #if DEBUG
             builder.Logging.AddDebug();
