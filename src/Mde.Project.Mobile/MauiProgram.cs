@@ -32,9 +32,9 @@ namespace Mde.Project.Mobile
             
             // ViewModels
             builder.Services.AddTransient<AgendaViewModel>();
-            // builder.Services.AddTransient<LoginViewModel>();
-            // builder.Services.AddTransient<HomePageViewModel>();
-            // builder.Services.AddTransient<AthletesPageViewModel>();
+            builder.Services.AddTransient<LoginViewModel>();
+            builder.Services.AddTransient<HomePageViewModel>();
+            builder.Services.AddTransient<AthletesPageViewModel>();
 
             // Pages
             builder.Services.AddTransient<AgendaPage>();
