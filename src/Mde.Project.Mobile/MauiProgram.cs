@@ -34,13 +34,14 @@ namespace Mde.Project.Mobile
             builder.Services.AddTransient<AgendaViewModel>();
             builder.Services.AddTransient<LoginViewModel>();
             builder.Services.AddTransient<HomePageViewModel>();
-            builder.Services.AddTransient<AthletesPageViewModel>();
+            builder.Services.AddTransient<AthletesViewModel>(); 
 
             // Pages
             builder.Services.AddTransient<AgendaPage>();
-            // builder.Services.AddTransient<LoginPage>();
-            // builder.Services.AddTransient<HomePage>();
-            // builder.Services.AddTransient<AthletesPage>();
+            builder.Services.AddTransient<LoginPage>();
+            builder.Services.AddTransient<HomePage>();
+            builder.Services.AddTransient<AthletesPage>();
+
 
 #if DEBUG
             builder.Logging.AddDebug();
