@@ -1,6 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
-using Mde.Project.Mobile.Services;  
+using Microsoft.Extensions.Logging;
 using Mde.Project.Mobile.Services.Interfaces;
+using Mde.Project.Mobile.Services.Mocks;  //mock
+using Mde.Project.Mobile.Services;    
 using Mde.Project.Mobile.ViewModels;
 using Mde.Project.Mobile.Pages;
 
@@ -19,19 +20,21 @@ namespace Mde.Project.Mobile
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
-            //services 
-             builder.Services.AddSingleton<ITrainingService, TrainingService>();
+            // Services
+            // MOCK:
+            builder.Services.AddSingleton<ITrainingService, MockTrainingService>();
+            // voor echte API vervang bovenste door
+            // builder.Services.AddSingleton<ITrainingService, TrainingService>();
 
-            //viewmodels
-             builder.Services.AddTransient<AgendaViewModel>();
+            //ViewModels 
+            builder.Services.AddTransient<AgendaViewModel>();
 
-            //Pages 
+            //Pages
             builder.Services.AddTransient<AgendaPage>();
-            
-#if DEBUG
-    		builder.Logging.AddDebug();
-#endif
 
+#if DEBUG
+            builder.Logging.AddDebug();
+#endif
             return builder.Build();
         }
     }
