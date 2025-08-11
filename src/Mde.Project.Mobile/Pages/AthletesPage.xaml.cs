@@ -1,9 +1,24 @@
-namespace Mde.Project.Mobile.Pages;
+using Mde.Project.Mobile.ViewModels;
 
-public partial class AthletesPage : ContentPage
+namespace Mde.Project.Mobile.Pages
 {
-	public AthletesPage()
-	{
-		InitializeComponent();
-	}
+    public partial class AthletesPage : ContentPage
+    {
+        private readonly AthletesViewModel _vm;
+
+        // ✅ DI levert het ViewModel aan
+        public AthletesPage(AthletesViewModel vm)
+        {
+            InitializeComponent();
+            _vm = vm;
+            BindingContext = _vm;
+        }
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            // laad categorieën + judoka’s (VM regelt SelectedCategory)
+            await _vm.LoadCategoriesAsync();
+        }
+    }
 }
