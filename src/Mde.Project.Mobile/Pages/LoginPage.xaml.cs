@@ -1,9 +1,13 @@
-namespace Mde.Project.Mobile.Pages;
+using Mde.Project.Mobile.ViewModels;
 
-public partial class LoginPage : ContentPage
+namespace Mde.Project.Mobile.Pages
 {
-	public LoginPage()
-	{
-		InitializeComponent();
-	}
+    public partial class LoginPage : ContentPage
+    {
+        public LoginPage(LoginViewModel vm)
+        {
+            InitializeComponent();
+            BindingContext = vm;
+        }
+    }
 }
