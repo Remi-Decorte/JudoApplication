@@ -1,0 +1,21 @@
+using Mde.Project.Mobile.Models;
+using Mde.Project.Mobile.Services.Interfaces;
+
+namespace Mde.Project.Mobile.Services.Mocks
+{
+    public class MockAuthService : IAuthService
+    {
+        public Task<JwtResponse?> LoginAsync(LoginModel model)
+        {
+// zogezegd succes volle login gebeurd er
+            var token = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+            return Task.FromResult<JwtResponse?>(new JwtResponse { Token = token });
+        }
+
+        public Task LogoutAsync()
+        {
+            Preferences.Remove("jwt_token");
+            return Task.CompletedTask;
+        }
+    }
+}

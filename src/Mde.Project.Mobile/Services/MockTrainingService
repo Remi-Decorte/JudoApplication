@@ -1,0 +1,41 @@
+using Mde.Project.Mobile.Models;
+using Mde.Project.Mobile.Services.Interfaces;
+
+namespace Mde.Project.Mobile.Services.Mocks
+{
+    public class MockTrainingService : ITrainingService
+    {
+        private readonly List<TrainingEntryModel> _store = new();
+
+        public MockTrainingService()
+        {
+            // seed voorbeelddata
+            _store.Add(new TrainingEntryModel
+            {
+                Date = DateTime.Today,
+                Type = "randori",
+                TechniqueScores = new()
+                {
+                    new TechniqueScoreModel { Technique = "Uchi Mata", ScoreCount = 3 },
+                    new TechniqueScoreModel { Technique = "Seoi Nage", ScoreCount = 2 },
+                    new TechniqueScoreModel { Technique = "Uki Goshi",  ScoreCount = 0 },
+                }
+            });
+            _store.Add(new TrainingEntryModel
+            {
+                Date = DateTime.Today.AddDays(-1),
+                Type = "kracht",
+                TechniqueScores = new()
+            });
+        }
+
+        public Task<List<TrainingEntryModel>> GetTrainingsAsync(string jwtToken)
+            => Task.FromResult(_store.OrderBy(t => t.Date).ToList());
+
+        public Task<bool> CreateTrainingAsync(TrainingEntryModel model, string jwtToken)
+        {
+            _store.Add(model);
+            return Task.FromResult(true);
+        }
+    }
+}

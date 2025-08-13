@@ -1,0 +1,10 @@
+using Mde.Project.Mobile.Models;
+
+namespace Mde.Project.Mobile.Services
+{
+    public interface IAuthService
+    {
+        Task<JwtResponse?> LoginAsync(LoginModel model);
+        Task LogoutAsync();
+    }
+}

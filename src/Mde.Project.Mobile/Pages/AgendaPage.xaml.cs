@@ -1,20 +1,25 @@
 using Mde.Project.Mobile.ViewModels;
 
-namespace Mde.Project.Mobile.Pages;
-
-public partial class AgendaPage : ContentPage
+namespace Mde.Project.Mobile.Pages
 {
-    private AgendaViewModel ViewModel => (AgendaViewModel)BindingContext;
-
-    public AgendaPage(string jwtToken)
+    public partial class AgendaPage : ContentPage
     {
-        InitializeComponent();
-        ViewModel.SetJwtToken(jwtToken);
-    }
+        private readonly AgendaViewModel _vm;
 
-    protected override async void OnAppearing()
-    {
-        base.OnAppearing();
-        await ViewModel.LoadTrainingsAsync();
+        public AgendaPage(AgendaViewModel vm) // dependency injection dit 
+        {
+            InitializeComponent();
+            _vm = vm;
+            BindingContext = _vm;
+        }
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            var jwt = Preferences.Get("jwt_token", string.Empty);
+            _vm.SetJwtToken(jwt);
+            await _vm.LoadTrainingsAsync();
+        }
     }
 }
+
