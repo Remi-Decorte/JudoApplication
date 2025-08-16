@@ -1,6 +1,7 @@
-using Mde.Project.Mobile.Models;
+﻿using Mde.Project.Mobile.Models;
 
-namespace Mde.Project.Mobile.Services
+
+namespace Mde.Project.Mobile.Interfaces
 {
     public interface ITrainingService
     {

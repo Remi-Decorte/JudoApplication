@@ -69,10 +69,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Mde.Project.WebApi\Mde.Project.WebApi.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
 	  <Compile Update="Pages\HomePage.xaml.cs">
 	    <DependentUpon>HomePage.xaml</DependentUpon>
 	  </Compile>
