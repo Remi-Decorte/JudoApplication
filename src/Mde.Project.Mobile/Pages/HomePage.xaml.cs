@@ -5,12 +5,15 @@ namespace Mde.Project.Mobile.Pages
     public partial class HomePage : ContentPage
     {
         private readonly HomePageViewModel _vm;
+        private readonly AthletesPage _athletesPage;
+        private readonly AgendaPage _agendaPage;
 
-        //DI 
-        public HomePage(HomePageViewModel vm)
+        public HomePage(HomePageViewModel vm, AthletesPage athletesPage, AgendaPage agendaPage)
         {
             InitializeComponent();
             _vm = vm;
+            _athletesPage = athletesPage;
+            _agendaPage = agendaPage;
             BindingContext = _vm;
         }
 
@@ -22,14 +25,12 @@ namespace Mde.Project.Mobile.Pages
 
         private async void NavigateToAthletes(object sender, EventArgs e)
         {
-            var page = Application.Current.Services.GetRequiredService<AthletesPage>();
-            await Navigation.PushAsync(page);
+            await Navigation.PushAsync(_athletesPage);
         }
 
         private async void NavigateToAgenda(object sender, EventArgs e)
         {
-            var page = Application.Current.Services.GetRequiredService<AgendaPage>();
-            await Navigation.PushAsync(page);
+            await Navigation.PushAsync(_agendaPage);
         }
     }
 }
