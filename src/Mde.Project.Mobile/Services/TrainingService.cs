@@ -2,8 +2,9 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
-using Mde.Project.Mobile.Services.Interfaces;
+
 
 namespace Mde.Project.Mobile.Services
 {

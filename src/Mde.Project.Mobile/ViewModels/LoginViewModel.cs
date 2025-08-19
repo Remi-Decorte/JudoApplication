@@ -1,8 +1,8 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
-using Mde.Project.Mobile.Services.Interfaces;
 
 namespace Mde.Project.Mobile.ViewModels
 {

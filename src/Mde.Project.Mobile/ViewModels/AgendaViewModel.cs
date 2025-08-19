@@ -1,15 +1,15 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
-using Mde.Project.Mobile.Services.Interfaces;
 
 namespace Mde.Project.Mobile.ViewModels
 {
     public class AgendaViewModel : INotifyPropertyChanged
     {
-        private readonly ITrainingService _trainingService;
-        public AgendaViewModel(ITrainingService trainingService) // <-- inject
+        public AgendaViewModel(ITrainingService trainingService) // <-- inject        private readonly ITrainingService _trainingService;
+
         {
             _trainingService = trainingService;
         }
