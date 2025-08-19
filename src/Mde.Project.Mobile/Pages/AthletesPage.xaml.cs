@@ -20,5 +20,16 @@ namespace Mde.Project.Mobile.Pages
             // laad categorieën + judoka’s (VM regelt SelectedCategory)
             await _vm.LoadCategoriesAsync();
         }
+
+        private void OnGoHome(object sender, EventArgs e)
+        {
+
+        }
+
+        private void OnGoAgenda(object sender, EventArgs e)
+        {
+
+        }
     }
 }
+

@@ -1,7 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Mde.Project.Mobile.Services.Interfaces;
-using Mde.Project.Mobile.Services.Mocks;  //mock
-using Mde.Project.Mobile.Services;    
 using Mde.Project.Mobile.ViewModels;
 using Mde.Project.Mobile.Pages;
 using Mde.Project.Mobile.Interfaces;
