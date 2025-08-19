@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
 
@@ -8,32 +9,53 @@ namespace Mde.Project.Mobile.ViewModels
 {
     public class AgendaViewModel : INotifyPropertyChanged
     {
-        public AgendaViewModel(ITrainingService trainingService) // <-- inject        private readonly ITrainingService _trainingService;
+        private readonly ITrainingService _trainingService;
 
+        public AgendaViewModel(ITrainingService trainingService)
         {
             _trainingService = trainingService;
         }
 
         public ObservableCollection<TrainingEntryModel> Trainings { get; } = new();
-        public bool IsBusy { get; set; }
+
+        private bool _isBusy;
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set { _isBusy = value; OnPropertyChanged(); }
+        }
+
         private string _jwtToken = string.Empty;
 
-        public void SetJwtToken(string token) => _jwtToken = token;
+        // <-- Deze methode werd gemist in jouw foutmelding
+        public void SetJwtToken(string token) => _jwtToken = token ?? string.Empty;
 
+        // <-- Deze methode werd gemist in jouw foutmelding
         public async Task LoadTrainingsAsync()
         {
-            if (IsBusy || string.IsNullOrEmpty(_jwtToken)) return;
-            IsBusy = true;
+            if (IsBusy || string.IsNullOrWhiteSpace(_jwtToken))
+                return;
 
-            var items = await _trainingService.GetTrainingsAsync(_jwtToken);
-            Trainings.Clear();
-            foreach (var it in items) Trainings.Add(it);
+            try
+            {
+                IsBusy = true;
 
-            IsBusy = false;
+                var items = await _trainingService.GetTrainingsAsync(_jwtToken);
+                Trainings.Clear();
+                if (items != null)
+                {
+                    foreach (var it in items)
+                        Trainings.Add(it);
+                }
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        void OnPropertyChanged([CallerMemberName] string? name = null) =>
+        private void OnPropertyChanged([CallerMemberName] string? name = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

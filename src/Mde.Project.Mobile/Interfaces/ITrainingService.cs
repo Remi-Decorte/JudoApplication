@@ -7,6 +7,5 @@ namespace Mde.Project.Mobile.Interfaces
     {
         Task<List<TrainingEntryModel>> GetTrainingsAsync(string jwtToken);
         Task<bool> CreateTrainingAsync(TrainingEntryModel model, string jwtToken);
-        Task AddTrainingAsync(TrainingModel training, string jwtToken);
     }
 }

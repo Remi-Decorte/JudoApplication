@@ -7,7 +7,7 @@ namespace Mde.Project.Mobile.Pages
         private readonly AgendaViewModel _vm;
         private readonly AddTrainingPage _addTrainingPage;
 
-        // ViewModel via DI
+        // ViewModel en AddTrainingPage via DI
         public AgendaPage(AgendaViewModel vm, AddTrainingPage addTrainingPage)
         {
             InitializeComponent();
@@ -20,14 +20,14 @@ namespace Mde.Project.Mobile.Pages
         {
             base.OnAppearing();
 
-            // JWT ophalen 
+            // JWT ophalen zoals jij het bewaart (SecureStorage/Preferences)
             var jwt = await SecureStorage.GetAsync("jwt_token") ?? string.Empty;
             _vm.SetJwtToken(jwt);
 
             await _vm.LoadTrainingsAsync();
         }
 
-        // voor naar training
+        // <- DIT is de handler die XAML verwacht
         private async void OnAddTrainingClicked(object? sender, EventArgs e)
         {
             await Navigation.PushAsync(_addTrainingPage);

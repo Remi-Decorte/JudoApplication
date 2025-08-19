@@ -83,14 +83,14 @@ namespace Mde.Project.Mobile.ViewModels
 
             try
             {
-                var training = new TrainingModel
+                var training = new TrainingEntryModel
                 {
                     Date = this.Date,
                     Type = this.SelectedType,
-                    Techniques = this.Techniques.ToList()
+                    TechniqueScores = this.Techniques.ToList()
                 };
 
-                await _trainingService.AddTrainingAsync(training, _jwtToken);
+                await _trainingService.CreateTrainingAsync(training, _jwtToken);
             }
             finally
             {
