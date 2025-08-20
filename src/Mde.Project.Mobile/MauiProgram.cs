@@ -33,13 +33,15 @@ namespace Mde.Project.Mobile
             builder.Services.AddTransient<AgendaViewModel>();
             builder.Services.AddTransient<LoginViewModel>();
             builder.Services.AddTransient<HomePageViewModel>();
-            builder.Services.AddTransient<AthletesViewModel>(); 
+            builder.Services.AddTransient<AthletesViewModel>();
+            builder.Services.AddTransient<AddTrainingViewModel>();
 
             // Pages
             builder.Services.AddTransient<AgendaPage>();
             builder.Services.AddTransient<LoginPage>();
             builder.Services.AddTransient<HomePage>();
             builder.Services.AddTransient<AthletesPage>();
+            builder.Services.AddTransient<AddTrainingPage>();
 
 
 #if DEBUG

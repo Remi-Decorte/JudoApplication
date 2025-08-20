@@ -70,7 +70,7 @@ namespace Mde.Project.Mobile.ViewModels
                     await SecureStorage.SetAsync("jwt_token", jwt.Token);
 
                     // navigeer naar home (pas route aan naar jouw Shell route)
-                    await Shell.Current.GoToAsync("//Home");
+                    await Shell.Current.GoToAsync("//home");
                 }
                 else
                 {
