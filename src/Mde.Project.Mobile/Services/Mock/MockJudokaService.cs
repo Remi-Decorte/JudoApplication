@@ -15,7 +15,8 @@ namespace Mde.Project.Mobile.Services.Mock
                 new JudokaModel { FullName = "Judoka B", Country = "FRA" },
                 new JudokaModel { FullName = "Judoka C", Country = "NED" },
                 new JudokaModel { FullName = "Judoka D", Country = "GER" },
-                new JudokaModel { FullName = "Judoka E", Country = "JPN" }
+                new JudokaModel { FullName = "Judoka E", Country = "JPN" },
+                new JudokaModel { FullName = "Judoka F", Country = "DE" }
             };
 
             _data["-66"] = new List<JudokaModel>
