@@ -60,5 +60,8 @@ namespace Mde.Project.Mobile.Services
                 return false;
             }
         }
+        public Task<bool> AddTrainingAsync(string jwtToken, TrainingEntryModel model)
+            => CreateTrainingAsync(model, jwtToken);
+
     }
 }
