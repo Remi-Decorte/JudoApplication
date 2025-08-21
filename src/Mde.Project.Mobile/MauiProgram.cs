@@ -3,6 +3,7 @@ using Mde.Project.Mobile.ViewModels;
 using Mde.Project.Mobile.Pages;
 using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Services.Mock;
+using CommunityToolkit.Maui;
 
 namespace Mde.Project.Mobile
 {
@@ -13,6 +14,7 @@ namespace Mde.Project.Mobile
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseMauiCommunityToolkit()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
