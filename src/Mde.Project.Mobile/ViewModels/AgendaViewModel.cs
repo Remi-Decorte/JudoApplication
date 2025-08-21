@@ -57,5 +57,30 @@ namespace Mde.Project.Mobile.ViewModels
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? name = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+
+        public async Task<bool> AddTrainingAsync(string type, DateTime date)
+        {
+            if (string.IsNullOrWhiteSpace(type))
+                return false;
+
+            // JWT moet al gezet zijn via SetJwtToken in OnAppearing
+            var model = new TrainingEntryModel
+            {
+                Date = date,
+                Type = type,
+                TechniqueScores = new() // lege lijst
+            };
+
+            var ok = await _trainingService.AddTrainingAsync(_jwtToken, model);
+            if (ok)
+            {
+                // Optimistisch lokaal toevoegen, bovenaan
+                Trainings.Insert(0, model);
+                OnPropertyChanged(nameof(Trainings));
+            }
+            return ok;
+        }
+
     }
 }
