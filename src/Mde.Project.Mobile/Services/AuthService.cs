@@ -2,46 +2,44 @@
 using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
 
-namespace Mde.Project.Mobile.Services;
-
-public class AuthService : IAuthService
+namespace Mde.Project.Mobile.Services
 {
-    private readonly HttpClient _httpClient;
-
-    public AuthService()
+    public class AuthService : IAuthService
     {
-        _httpClient = new HttpClient
-        {
-            BaseAddress = new Uri("https://fb96g0tc-62160.uks1.devtunnels.ms/api/") 
-        };
-    }
+        private readonly HttpClient _httpClient;
 
-    public async Task<JwtResponse?> LoginAsync(LoginModel login)
-    {
-        try
+        public AuthService()
         {
-            var response = await _httpClient.PostAsJsonAsync("auth/login", login);
-
-            if (response.IsSuccessStatusCode)
+            _httpClient = new HttpClient
             {
-                var result = await response.Content.ReadFromJsonAsync<JwtResponse>();
-                return result;
-            }
-
-            return null;
+                BaseAddress = new Uri("https://fb96g0tc-62160.uks1.devtunnels.ms/api/")
+            };
         }
-        catch (Exception ex)
+
+        public async Task<JwtResponse?> LoginAsync(LoginModel login)
         {
-            var msg = ex.Message;
-            return null;
-
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("auth/login", login);
+                if (response.IsSuccessStatusCode)
+                    return await response.Content.ReadFromJsonAsync<JwtResponse>();
+                return null;
+            }
+            catch { return null; }
         }
-    }
 
-    public Task LogoutAsync()
-    {
-        throw new NotImplementedException();
+        public async Task<JwtResponse?> RegisterAsync(RegisterModel register)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("auth/register", register);
+                if (response.IsSuccessStatusCode)
+                    return await response.Content.ReadFromJsonAsync<JwtResponse>();
+                return null;
+            }
+            catch { return null; }
+        }
+
+        public Task LogoutAsync() => Task.CompletedTask;
     }
 }
-
-

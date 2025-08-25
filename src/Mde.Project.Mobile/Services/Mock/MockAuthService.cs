@@ -16,5 +16,13 @@ namespace Mde.Project.Mobile.Services.Mock
             // Niets te doen in mock
             return Task.CompletedTask;
         }
+
+        public Task<JwtResponse?> RegisterAsync(RegisterModel register)
+        {
+            var ok = !string.IsNullOrWhiteSpace(register.Email) &&
+                     !string.IsNullOrWhiteSpace(register.Password) &&
+                     !string.IsNullOrWhiteSpace(register.FullName);
+            return Task.FromResult(ok ? new JwtResponse { Token = "mock-token" } : null);
+        }
     }
 }
