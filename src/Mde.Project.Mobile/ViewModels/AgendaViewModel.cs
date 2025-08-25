@@ -8,7 +8,8 @@ using System.Windows.Input;
 using Microsoft.Maui.Controls;
 using CommunityToolkit.Maui.Media;             
 using Mde.Project.Mobile.Interfaces;          
-using Mde.Project.Mobile.Models;               
+using Mde.Project.Mobile.Models;
+using System.Globalization;
 
 namespace Mde.Project.Mobile.ViewModels
 {
@@ -25,8 +26,8 @@ namespace Mde.Project.Mobile.ViewModels
             _trainingService = trainingService;
 
             // Commands
-            StartDictationCommand = new Command(async () => await StartDictationAsync());
-            StopDictationCommand = new Command(() => _sttCts?.Cancel());
+            StartDictationCommand = new Command(async () => await StartDictationAsync(), () => !IsListening);
+            StopDictationCommand = new Command(() => _sttCts?.Cancel(), () => IsListening);
             ApplyCommentCommand = new Command(ApplyCommentToSelected);
         }
 
@@ -38,6 +39,19 @@ namespace Mde.Project.Mobile.ViewModels
         {
             get => _isBusy;
             set { _isBusy = value; OnPropertyChanged(); }
+        }
+
+        private bool _isListening;
+        public bool IsListening
+        {
+            get => _isListening;
+            set 
+            { 
+                _isListening = value; 
+                OnPropertyChanged();
+                ((Command)StartDictationCommand).ChangeCanExecute();
+                ((Command)StopDictationCommand).ChangeCanExecute(); 
+            }
         }
 
         private string _jwtToken = string.Empty;
@@ -83,56 +97,96 @@ namespace Mde.Project.Mobile.ViewModels
         public ICommand StartDictationCommand { get; }
         public ICommand StopDictationCommand { get; }
         public ICommand ApplyCommentCommand { get; }
+
         private async Task StartDictationAsync()
         {
             try
             {
-                var granted = await _speech.RequestPermissions(default);
+                if(IsListening) return;
+
+                var granted = await _speech.RequestPermissions();
                 if (!granted)
                 {
-                    await Application.Current?.MainPage.DisplayAlert("Microfoon", "Toestemming geweigerd.", "OK");
+                    await Application.Current?.MainPage?.DisplayAlert("Microfoon", "Toestemming geweigerd.", "OK");
                     return;
                 }
 
                 _sttCts?.Cancel();
+                _sttCts?.Dispose();
                 _sttCts = new CancellationTokenSource();
 
-                // Progress ontvangt (deel)resultaten tijdens het inspreken
-                var progress = new Progress<string?>(partial =>
-                {
-                    if (string.IsNullOrWhiteSpace(partial)) return;
-                    NewComment = string.IsNullOrWhiteSpace(NewComment)
-                        ? partial.Trim()
-                        : $"{NewComment} {partial.Trim()}";
-                });
+                IsListening = true;
 
-                // Let op: deze overload vereist recognitionResult
-                await _speech.ListenAsync(
-                    culture: null,                 // of: new System.Globalization.CultureInfo("nl-NL")
-                    recognitionResult: progress,
-                    cancellationToken: _sttCts.Token
-                );
-            }
-            catch (OperationCanceledException)
-            {
-                // user stopte
+                try
+                {
+                    var result = await _speech.ListenAsync(
+                        culture: CultureInfo.CurrentCulture,
+                        recognitionResult: new Progress<string?>(OnSpeechRecognitionUpdate),
+                        cancellationToken: _sttCts.Token
+                        );
+
+                    if (!string.IsNullOrWhiteSpace(result.Text))
+                    {
+                        NewComment = result.Text.Trim();
+                    }
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception ex)
+                {
+                    await Application.Current?.MainPage?.DisplayAlert("Fout bij het inspreken", $"Onverwachte fout: {ex.Message}", "OK");
+                }
+
             }
             catch (Exception ex)
             {
-                await Application.Current?.MainPage.DisplayAlert("Fout bij inspreken", ex.Message, "OK");
+                await Application.Current?.MainPage?.DisplayAlert("Fout", $"Onverwachte fout: {ex.Message}", "OK");
+            }
+            finally
+            {
+                IsListening = false;
+                _sttCts?.Dispose();
+                _sttCts = null;
             }
         }
 
+        private void OnSpeechRecognitionUpdate(string? partialResult)
+        {
 
-        private void ApplyCommentToSelected()
+            if (MainThread.IsMainThread)
+            {
+                UpdatePartialText(partialResult);
+            }
+            else
+            {
+                MainThread.BeginInvokeOnMainThread(() => UpdatePartialText(partialResult));
+            }
+        }
+
+        private void UpdatePartialText(string? partialResult)
+        {
+            if (!string.IsNullOrWhiteSpace(partialResult))
+            {
+                NewComment = partialResult.Trim();
+            }
+        
+        }
+
+        private async void ApplyCommentToSelected()
         {
             if (SelectedTraining is null)
             {
-                Application.Current?.MainPage.DisplayAlert("Selecteer", "Kies eerst een training in de lijst.", "OK");
+                await Application.Current?.MainPage.DisplayAlert("Selecteer", "Kies eerst een training in de lijst.", "OK");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(NewComment))
+            {
+                await Application.Current?.MainPage?.DisplayAlert("Commentaar", "Voer eerst commentaar in.", "OK");
                 return;
             }
 
             SelectedTraining.Comment = NewComment;
+            NewComment = string.Empty;
             OnPropertyChanged(nameof(SelectedTraining));
         }
 

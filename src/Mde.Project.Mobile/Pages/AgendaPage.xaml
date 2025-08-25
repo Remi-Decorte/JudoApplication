@@ -93,9 +93,14 @@
                     <Label Text="Commentaar voor geselecteerde training"
                            FontAttributes="Bold" />
 
-                    <!-- Gebonden aan ViewModel.NewComment -->
+                    <Label Text="Aan het luisteren..."
+                           TextColor="Green"
+                           FontAttributes="Italic"
+                           IsVisible="{Binding IsListening}"/>
+                    
                     <Editor Text="{Binding NewComment}"
                             AutoSize="TextChanges"
+                            IsEnabled="{Binding IsListening, Converter={StaticResource InvertedBoolConverter}}"
                             Placeholder="Spreek in of typ je comment hier..." />
 
                     <HorizontalStackLayout Spacing="8">
