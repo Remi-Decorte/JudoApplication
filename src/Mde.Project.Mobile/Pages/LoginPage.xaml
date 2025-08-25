@@ -19,6 +19,9 @@
                     Command="{Binding LoginCommand}"
                     BackgroundColor="#FBBF24" TextColor="Black" FontAttributes="Bold" />
 
+            <Button Text="Nog geen account? Registreer"
+                    Clicked="OnRegisterClicked" />
+
             <Label Text="{Binding ErrorMessage}" TextColor="Red" />
 
             <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />

@@ -4,10 +4,20 @@ namespace Mde.Project.Mobile.Pages
 {
     public partial class LoginPage : ContentPage
     {
-        public LoginPage(LoginViewModel vm)
+        private readonly LoginViewModel _vm;
+        private readonly RegisterPage _registerPage;
+
+        public LoginPage(LoginViewModel vm, RegisterPage registerPage)
         {
             InitializeComponent();
-            BindingContext = vm;
+            _vm = vm;
+            _registerPage = registerPage;
+            BindingContext = _vm;
+        }
+
+        private async void OnRegisterClicked(object? sender, EventArgs e)
+        {
+            await Navigation.PushAsync(_registerPage);
         }
     }
 }
