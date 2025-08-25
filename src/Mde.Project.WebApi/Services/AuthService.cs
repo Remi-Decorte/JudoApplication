@@ -27,7 +27,7 @@ namespace Mde.Project.WebApi.Services
 
         public async Task<AuthResponse?> LoginAsync(LoginRequest request)
         {
-            var user = await _userManager.FindByNameAsync(request.Username);
+            var user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null)
             {
                 return null;

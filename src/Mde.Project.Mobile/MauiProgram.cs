@@ -4,6 +4,7 @@ using Mde.Project.Mobile.Pages;
 using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Services.Mock;
 using CommunityToolkit.Maui;
+using Mde.Project.Mobile.Services;
 
 namespace Mde.Project.Mobile
 {
@@ -24,7 +25,7 @@ namespace Mde.Project.Mobile
             // Services
             // MOCK:
             builder.Services.AddSingleton<ITrainingService, MockTrainingService>();
-            builder.Services.AddSingleton<IAuthService,     MockAuthService>();
+            builder.Services.AddSingleton<IAuthService,     AuthService>();
             builder.Services.AddSingleton<IEventService,    MockEventService>();
             builder.Services.AddSingleton<IJudokaService,   MockJudokaService>();
             // voor echte API vervang bovenste door

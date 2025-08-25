@@ -1,9 +1,10 @@
 ﻿using System.Net.Http.Json;
+using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
 
 namespace Mde.Project.Mobile.Services;
 
-public class AuthService
+public class AuthService : IAuthService
 {
     private readonly HttpClient _httpClient;
 
@@ -11,11 +12,11 @@ public class AuthService
     {
         _httpClient = new HttpClient
         {
-            BaseAddress = new Uri("https://localhost:62160/") 
+            BaseAddress = new Uri("https://fb96g0tc-62160.uks1.devtunnels.ms/api/") 
         };
     }
 
-    public async Task<string?> LoginAsync(LoginModel login)
+    public async Task<JwtResponse?> LoginAsync(LoginModel login)
     {
         try
         {
@@ -24,15 +25,22 @@ public class AuthService
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<JwtResponse>();
-                return result?.Token;
+                return result;
             }
 
             return null;
         }
-        catch
+        catch (Exception ex)
         {
+            var msg = ex.Message;
             return null;
+
         }
+    }
+
+    public Task LogoutAsync()
+    {
+        throw new NotImplementedException();
     }
 }
 
