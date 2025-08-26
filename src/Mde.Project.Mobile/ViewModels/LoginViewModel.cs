@@ -59,27 +59,29 @@ namespace Mde.Project.Mobile.ViewModels
 
             try
             {
-                var model = new LoginModel { Email = Email, Password = Password };
-
-                // IAuthService -> JwtResponse? (MockAuthService geeft een token terug)
-                var jwt = await _authService.LoginAsync(model);
-
-                if (jwt != null && !string.IsNullOrWhiteSpace(jwt.Token))
+                var loginModel = new LoginModel
                 {
-                    // bewaar veilig
-                    await SecureStorage.SetAsync("jwt_token", jwt.Token);
+                    Email = Email,
+                    Password = Password
+                };
 
-                    // navigeer naar home (pas route aan naar jouw Shell route)
+                var jwtResponse = await _authService.LoginAsync(loginModel);
+
+                if (jwtResponse != null && !string.IsNullOrWhiteSpace(jwtResponse.Token))
+                {
+                    // Store the JWT token securely
+                    await SecureStorage.SetAsync("jwt_token", jwtResponse.Token);
+                    // Navigate to the home page
                     await Shell.Current.GoToAsync("//home");
                 }
                 else
                 {
-                    ErrorMessage = "Login mislukt. Controleer je e-mailadres en wachtwoord.";
+                    ErrorMessage = "Inloggen mislukt. Controleer je e-mailadres en wachtwoord.";
                 }
             }
             catch (Exception ex)
             {
-                ErrorMessage = $"Er ging iets mis: {ex.Message}";
+                ErrorMessage = $"Fout bij inloggen: {ex.Message}";
             }
             finally
             {

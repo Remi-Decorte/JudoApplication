@@ -6,8 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Microsoft.Maui.Controls;
-using CommunityToolkit.Maui.Media;             
-using Mde.Project.Mobile.Interfaces;          
+using CommunityToolkit.Maui.Media;
+using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
 using System.Globalization;
 
@@ -45,33 +45,40 @@ namespace Mde.Project.Mobile.ViewModels
         public bool IsListening
         {
             get => _isListening;
-            set 
-            { 
-                _isListening = value; 
+            set
+            {
+                _isListening = value;
                 OnPropertyChanged();
                 ((Command)StartDictationCommand).ChangeCanExecute();
-                ((Command)StopDictationCommand).ChangeCanExecute(); 
+                ((Command)StopDictationCommand).ChangeCanExecute();
             }
         }
 
-        private string _jwtToken = string.Empty;
-        public void SetJwtToken(string token) => _jwtToken = token ?? string.Empty;
-
         public async Task LoadTrainingsAsync()
         {
-            if (IsBusy || string.IsNullOrWhiteSpace(_jwtToken))
-                return;
+            if (IsBusy) return;
+            IsBusy = true;
+            //ErrorMessage = string.Empty;
 
             try
             {
-                IsBusy = true;
-                var items = await _trainingService.GetTrainingsAsync(_jwtToken);
-                Trainings.Clear();
-                if (items != null)
+                var entries = await _trainingService.GetUserTrainingEntriesAsync();
+                if (entries != null)
                 {
-                    foreach (var it in items)
-                        Trainings.Add(it);
+                    Trainings.Clear();
+                    foreach (var entry in entries)
+                    {
+                        Trainings.Add(entry);
+                    }
                 }
+                else
+                {
+                    //ErrorMessage = "Kon geen trainingen laden.";
+                }
+            }
+            catch (Exception ex)
+            {
+                //ErrorMessage = $"Fout bij het laden van trainingen: {ex.Message}";
             }
             finally
             {
@@ -102,7 +109,7 @@ namespace Mde.Project.Mobile.ViewModels
         {
             try
             {
-                if(IsListening) return;
+                if (IsListening) return;
 
                 var granted = await _speech.RequestPermissions();
                 if (!granted)
@@ -168,7 +175,7 @@ namespace Mde.Project.Mobile.ViewModels
             {
                 NewComment = partialResult.Trim();
             }
-        
+
         }
 
         private async void ApplyCommentToSelected()
@@ -188,25 +195,6 @@ namespace Mde.Project.Mobile.ViewModels
             SelectedTraining.Comment = NewComment;
             NewComment = string.Empty;
             OnPropertyChanged(nameof(SelectedTraining));
-        }
-
-
-        public Task<bool> AddTrainingAsync(string type, DateTime date)
-        {
-            if (string.IsNullOrWhiteSpace(type))
-                return Task.FromResult(false);
-
-            var model = new TrainingEntryModel
-            {
-                Date = date,
-                Type = type,
-                TechniqueScores = new(),
-                Comment = NewComment
-            };
-
-            Trainings.Insert(0, model);
-            OnPropertyChanged(nameof(Trainings));
-            return Task.FromResult(true);
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

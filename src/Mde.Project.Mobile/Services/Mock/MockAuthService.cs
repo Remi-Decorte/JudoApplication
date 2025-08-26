@@ -21,7 +21,7 @@ namespace Mde.Project.Mobile.Services.Mock
         {
             var ok = !string.IsNullOrWhiteSpace(register.Email) &&
                      !string.IsNullOrWhiteSpace(register.Password) &&
-                     !string.IsNullOrWhiteSpace(register.FullName);
+                     !string.IsNullOrWhiteSpace(register.Username);
             return Task.FromResult(ok ? new JwtResponse { Token = "mock-token" } : null);
         }
     }

@@ -19,11 +19,6 @@ namespace Mde.Project.Mobile.Pages
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-
-            // JWT ophalen zoals jij het bewaart (SecureStorage/Preferences)
-            var jwt = await SecureStorage.GetAsync("jwt_token") ?? string.Empty;
-            _vm.SetJwtToken(jwt);
-
             await _vm.LoadTrainingsAsync();
         }
 

@@ -12,12 +12,5 @@ namespace Mde.Project.Mobile.Pages
             _vm = vm;
             BindingContext = _vm;
         }
-
-        protected override async void OnAppearing()
-        {
-            base.OnAppearing();
-            var jwt = await SecureStorage.GetAsync("jwt_token") ?? string.Empty;
-            _vm.SetJwt(jwt);
-        }
     }
 }

@@ -43,6 +43,7 @@ namespace Mde.Project.WebApi.Controllers
             {
                 return BadRequest(ModelState);
             }
+            request.Username = request.Username.Replace(" ", "");
 
             // Check if user already exists
             var existingUser = await _userManager.FindByNameAsync(request.Username);

@@ -7,13 +7,12 @@ namespace Mde.Project.Mobile.Services.Mock
     {
         private readonly List<TrainingEntryModel> _store = new();
 
-        public Task<List<TrainingEntryModel>> GetTrainingsAsync(string jwtToken)
-            => Task.FromResult(_store.ToList());
+        public Task<List<TrainingEntryModel>?> GetUserTrainingEntriesAsync() => Task.FromResult(_store.ToList());
 
-        public Task<bool> CreateTrainingAsync(TrainingEntryModel model, string jwtToken)
+        public Task<TrainingEntryModel?> CreateTrainingEntryAsync(TrainingEntryModel request)
         {
-            _store.Add(model);
-            return Task.FromResult(true);
+            _store.Add(request);
+            return Task.FromResult(request);
         }
     }
 }

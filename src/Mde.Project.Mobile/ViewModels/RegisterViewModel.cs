@@ -16,11 +16,11 @@ namespace Mde.Project.Mobile.ViewModels
             RegisterCommand = new Command(async () => await RegisterAsync(), () => !IsBusy);
         }
 
-        private string _fullName = string.Empty;
-        public string FullName
+        private string _username = string.Empty;
+        public string Username
         {
-            get => _fullName;
-            set { _fullName = value; OnPropertyChanged(); }
+            get => _username;
+            set { _username = value; OnPropertyChanged(); }
         }
 
         private string _email = string.Empty;
@@ -61,21 +61,32 @@ namespace Mde.Project.Mobile.ViewModels
 
             try
             {
-                var model = new RegisterModel { Email = Email, Password = Password, FullName = FullName };
-                var jwt = await _authService.RegisterAsync(model);
-                if (jwt != null && !string.IsNullOrWhiteSpace(jwt.Token))
+                var registerModel = new RegisterModel
                 {
-                    await SecureStorage.SetAsync("jwt_token", jwt.Token);
+                    Username = Username,
+                    Email = Email,
+                    Password = Password,
+                    FirstName = string.Empty,
+                    LastName = string.Empty
+                };
+
+                var jwtResponse = await _authService.RegisterAsync(registerModel);
+
+                if (jwtResponse != null && !string.IsNullOrWhiteSpace(jwtResponse.Token))
+                {
+                    // Store the JWT token securely
+                    await SecureStorage.SetAsync("jwt_token", jwtResponse.Token);
+                    // Navigate to the home page
                     await Shell.Current.GoToAsync("//home");
                 }
                 else
                 {
-                    ErrorMessage = "Registratie mislukt. Probeer opnieuw.";
+                    ErrorMessage = "Registratie mislukt. Controleer je gegevens.";
                 }
             }
             catch (Exception ex)
             {
-                ErrorMessage = $"Fout: {ex.Message}";
+                ErrorMessage = $"Fout bij registreren: {ex.Message}";
             }
             finally
             {

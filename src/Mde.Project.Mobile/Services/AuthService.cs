@@ -4,42 +4,24 @@ using Mde.Project.Mobile.Models;
 
 namespace Mde.Project.Mobile.Services
 {
-    public class AuthService : IAuthService
+    public class AuthService : BaseApiService, IAuthService
     {
-        private readonly HttpClient _httpClient;
-
-        public AuthService()
-        {
-            _httpClient = new HttpClient
-            {
-                BaseAddress = new Uri("https://fb96g0tc-62160.uks1.devtunnels.ms/api/")
-            };
-        }
-
         public async Task<JwtResponse?> LoginAsync(LoginModel login)
         {
-            try
-            {
-                var response = await _httpClient.PostAsJsonAsync("auth/login", login);
-                if (response.IsSuccessStatusCode)
-                    return await response.Content.ReadFromJsonAsync<JwtResponse>();
-                return null;
-            }
-            catch { return null; }
+            return await ExecuteApiCallAsync<JwtResponse>(() =>
+                _httpClient.PostAsJsonAsync("auth/login", login));
         }
 
         public async Task<JwtResponse?> RegisterAsync(RegisterModel register)
         {
-            try
-            {
-                var response = await _httpClient.PostAsJsonAsync("auth/register", register);
-                if (response.IsSuccessStatusCode)
-                    return await response.Content.ReadFromJsonAsync<JwtResponse>();
-                return null;
-            }
-            catch { return null; }
+            return await ExecuteApiCallAsync<JwtResponse>(() =>
+                _httpClient.PostAsJsonAsync("auth/register", register));
         }
 
-        public Task LogoutAsync() => Task.CompletedTask;
+        public async Task LogoutAsync()
+        {
+            SecureStorage.Remove(TokenKey);
+            _httpClient.DefaultRequestHeaders.Authorization = null;
+        }
     }
 }

@@ -35,8 +35,6 @@ namespace Mde.Project.Mobile.ViewModels
             DecrementCommand = new Command<TechniqueScoreModel>(t => { if (t != null && t.ScoreCount > 0) { t.ScoreCount--; OnPropertyChanged(nameof(Techniques)); } });
         }
 
-        public void SetJwt(string token) => _jwtToken = token;
-
         private DateTime _date;
         public DateTime Date
         {
@@ -85,12 +83,13 @@ namespace Mde.Project.Mobile.ViewModels
             {
                 var training = new TrainingEntryModel
                 {
+                    Comment = string.Empty,
                     Date = this.Date,
                     Type = this.SelectedType,
                     TechniqueScores = this.Techniques.ToList()
                 };
 
-                await _trainingService.CreateTrainingAsync(training, _jwtToken);
+                await _trainingService.CreateTrainingEntryAsync(training);
             }
             finally
             {
