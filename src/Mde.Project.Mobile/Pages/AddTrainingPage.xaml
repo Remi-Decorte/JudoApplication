@@ -5,47 +5,61 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     Title="Training toevoegen">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="16" BackgroundColor="LightGray">
+    <Grid Padding="20" BackgroundColor="LightGray"
+          RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="16">
 
-            <!-- Datum -->
-            <VerticalStackLayout BackgroundColor="White" Padding="12" Spacing="6">
+        <!-- Datum -->
+        <Frame Grid.Row="0" Padding="12" BackgroundColor="White" HasShadow="False">
+            <VerticalStackLayout Spacing="6">
                 <Label Text="Datum" FontAttributes="Bold"/>
-                <DatePicker Date="{Binding Date}"/>
+                <DatePicker Date="{Binding Date}" />
             </VerticalStackLayout>
+        </Frame>
 
-            <!-- Type -->
-            <VerticalStackLayout BackgroundColor="White" Padding="12" Spacing="6">
+        <!-- Type -->
+        <Frame Grid.Row="1" Padding="12" BackgroundColor="White" HasShadow="False">
+            <VerticalStackLayout Spacing="6">
                 <Label Text="Type training" FontAttributes="Bold"/>
-                <Picker ItemsSource="{Binding TrainingTypes}" SelectedItem="{Binding SelectedType}"/>
+                <Picker ItemsSource="{Binding TrainingTypes}"
+                        SelectedItem="{Binding SelectedType}" />
             </VerticalStackLayout>
+        </Frame>
 
-            <!-- Technieken (kun je alleen kiezen bij randoris) -->
-            <VerticalStackLayout IsVisible="{Binding IsRandori}" BackgroundColor="White" Padding="12" Spacing="8">
-                <Label Text="Technieken anb scores" FontAttributes="Bold"/>
+        <!-- Technieken (alleen bij randori) -->
+        <Frame Grid.Row="2" Padding="12" BackgroundColor="White" HasShadow="False"
+               IsVisible="{Binding IsRandori}">
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Technieken en scores" FontAttributes="Bold" />
                 <CollectionView ItemsSource="{Binding Techniques}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" Padding="4">
-                                <Label Text="{Binding Technique}" VerticalOptions="Center"/>
-                                <Button Grid.Column="1" Text="-" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DecrementCommand}" CommandParameter="{Binding .}" />
-                                <Label Grid.Column="2" Text="{Binding ScoreCount}" VerticalOptions="Center" HorizontalTextAlignment="Center" />
-                                <Button Grid.Column="3" Text="+" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.IncrementCommand}" CommandParameter="{Binding .}" />
+                            <Grid ColumnDefinitions="*,Auto,50,Auto" Padding="4" ColumnSpacing="8">
+                                <Label Text="{Binding Technique}" VerticalOptions="Center" />
+                                <Button Grid.Column="1" Text="-" 
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DecrementCommand}"
+                                        CommandParameter="{Binding .}" />
+                                <Label Grid.Column="2" Text="{Binding ScoreCount}" 
+                                       VerticalOptions="Center" HorizontalTextAlignment="Center" />
+                                <Button Grid.Column="3" Text="+"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.IncrementCommand}"
+                                        CommandParameter="{Binding .}" />
                             </Grid>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
             </VerticalStackLayout>
+        </Frame>
 
-            <!-- Opslaan -->
-            <Button Text="Opslaan"
-                    Command="{Binding SaveCommand}"
-                    BackgroundColor="#FBBF24"
-                    TextColor="Black"
-                    FontAttributes="Bold"/>
+        <!-- Opslaan -->
+        <Button Grid.Row="3" Text="Opslaan"
+                Command="{Binding SaveCommand}"
+                BackgroundColor="#FBBF24"
+                TextColor="Black"
+                FontAttributes="Bold" />
 
-            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-
-        </VerticalStackLayout>
-    </ScrollView>
+        <!-- Busy -->
+        <ActivityIndicator Grid.Row="4"
+                           IsRunning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}" />
+    </Grid>
 </ContentPage>

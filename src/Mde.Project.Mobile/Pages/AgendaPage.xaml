@@ -54,7 +54,7 @@
                                HasShadow="True"
                                BackgroundColor="White">
 
-                            <!-- Maak de héle kaart klikbaar -->
+                            <!-- Hele kaart klikbaar -->
                             <Frame.GestureRecognizers>
                                 <TapGestureRecognizer
                                     Command="{Binding BindingContext.SelectTrainingCommand, Source={x:Reference AgendaPageRoot}}"
@@ -110,7 +110,7 @@
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
-            <!-- Comment invoer + spraakbediening + quick foto -->
+            <!-- Comment invoer + spraakbediening + quick foto + thumbnails + SAVE -->
             <Frame Grid.Row="1"
                    Padding="12"
                    CornerRadius="12"
@@ -120,16 +120,51 @@
                     <Label Text="Commentaar voor geselecteerde training"
                            FontAttributes="Bold" />
 
+                    <!-- Info over de selectie -->
+                    <Label>
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="Geselecteerd: " FontAttributes="Bold"/>
+                                <Span Text="{Binding SelectedTraining.Date, StringFormat='{}{0:dd/MM/yyyy}'}"/>
+                                <Span Text="  •  "/>
+                                <Span Text="{Binding SelectedTraining.Type}"/>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+
+                    <!-- Dictation status -->
                     <Label Text="Aan het luisteren..."
                            TextColor="Green"
                            FontAttributes="Italic"
                            IsVisible="{Binding IsListening}"/>
 
+                    <!-- Comment editor -->
                     <Editor Text="{Binding NewComment}"
                             AutoSize="TextChanges"
-                            IsEnabled="{Binding IsListening, Converter={StaticResource InvertedBoolConverter}}"
-                            Placeholder="Spreek in of typ je comment hier..." />
+                            Placeholder="Typ of spreek je comment hier..." />
 
+                    <!-- 🔹 Thumbnails van gekoppelde foto's -->
+                    <CollectionView ItemsSource="{Binding SelectedTraining.Attachments}"
+                                    HeightRequest="96"
+                                    Margin="0,4,0,0">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Frame Padding="4" Margin="4"
+                                       CornerRadius="10"
+                                       HasShadow="False"
+                                       BorderColor="#DDDDDD">
+                                    <Image WidthRequest="80" HeightRequest="80"
+                                           Aspect="AspectFill"
+                                           Source="{Binding Uri}" />
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <!-- Acties -->
                     <HorizontalStackLayout Spacing="8">
                         <!-- Start dicteren -->
                         <Button Text="🎤 Inspreken"
@@ -145,11 +180,11 @@
                         <Button Text="📸 Snel foto (lokaal)"
                                 Command="{Binding QuickShotCommand}" />
 
-                        <!-- Opslaan comment -->
-                        <Button Text="Opslaan bij training"
-                                Command="{Binding ApplyCommentCommand}"
-                                BackgroundColor="#FBBF24"
-                                TextColor="Black"
+                        <!-- SAVE (persist lokaal) -->
+                        <Button Text="Save"
+                                Command="{Binding SaveCommentCommand}"
+                                BackgroundColor="#2563EB"
+                                TextColor="White"
                                 FontAttributes="Bold" />
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
