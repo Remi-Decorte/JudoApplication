@@ -1,15 +1,19 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Microsoft.Maui.Controls;
-using CommunityToolkit.Maui.Media;
+using Microsoft.Maui;                
+using Microsoft.Maui.Controls;       
+using Microsoft.Maui.Media;          
+using Microsoft.Maui.Storage;       
+using CommunityToolkit.Maui.Media;   
 using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
-using System.Globalization;
 
 namespace Mde.Project.Mobile.ViewModels
 {
@@ -25,10 +29,12 @@ namespace Mde.Project.Mobile.ViewModels
         {
             _trainingService = trainingService;
 
-            // Commands
+            // Voice to text
             StartDictationCommand = new Command(async () => await StartDictationAsync(), () => !IsListening);
             StopDictationCommand = new Command(() => _sttCts?.Cancel(), () => IsListening);
             ApplyCommentCommand = new Command(ApplyCommentToSelected);
+
+            QuickShotCommand = new Command(async () => await QuickShotAsync());
         }
 
         // ====== Collections & state ======
@@ -58,27 +64,17 @@ namespace Mde.Project.Mobile.ViewModels
         {
             if (IsBusy) return;
             IsBusy = true;
-            //ErrorMessage = string.Empty;
 
             try
             {
+                // jouw service-methode
                 var entries = await _trainingService.GetUserTrainingEntriesAsync();
+                Trainings.Clear();
                 if (entries != null)
                 {
-                    Trainings.Clear();
                     foreach (var entry in entries)
-                    {
                         Trainings.Add(entry);
-                    }
                 }
-                else
-                {
-                    //ErrorMessage = "Kon geen trainingen laden.";
-                }
-            }
-            catch (Exception ex)
-            {
-                //ErrorMessage = $"Fout bij het laden van trainingen: {ex.Message}";
             }
             finally
             {
@@ -98,12 +94,17 @@ namespace Mde.Project.Mobile.ViewModels
         public TrainingEntryModel? SelectedTraining
         {
             get => _selectedTraining;
-            set { _selectedTraining = value; OnPropertyChanged(); }
+            set
+            {
+                _selectedTraining = value;
+                OnPropertyChanged();
+            }
         }
 
         public ICommand StartDictationCommand { get; }
         public ICommand StopDictationCommand { get; }
         public ICommand ApplyCommentCommand { get; }
+        public ICommand QuickShotCommand { get; } // nieuwe knop
 
         private async Task StartDictationAsync()
         {
@@ -111,7 +112,7 @@ namespace Mde.Project.Mobile.ViewModels
             {
                 if (IsListening) return;
 
-                var granted = await _speech.RequestPermissions();
+                bool granted = await _speech.RequestPermissions();
                 if (!granted)
                 {
                     await Application.Current?.MainPage?.DisplayAlert("Microfoon", "Toestemming geweigerd.", "OK");
@@ -130,19 +131,16 @@ namespace Mde.Project.Mobile.ViewModels
                         culture: CultureInfo.CurrentCulture,
                         recognitionResult: new Progress<string?>(OnSpeechRecognitionUpdate),
                         cancellationToken: _sttCts.Token
-                        );
+                    );
 
                     if (!string.IsNullOrWhiteSpace(result.Text))
-                    {
                         NewComment = result.Text.Trim();
-                    }
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception ex)
                 {
                     await Application.Current?.MainPage?.DisplayAlert("Fout bij het inspreken", $"Onverwachte fout: {ex.Message}", "OK");
                 }
-
             }
             catch (Exception ex)
             {
@@ -158,43 +156,98 @@ namespace Mde.Project.Mobile.ViewModels
 
         private void OnSpeechRecognitionUpdate(string? partialResult)
         {
-
             if (MainThread.IsMainThread)
-            {
                 UpdatePartialText(partialResult);
-            }
             else
-            {
                 MainThread.BeginInvokeOnMainThread(() => UpdatePartialText(partialResult));
-            }
         }
 
         private void UpdatePartialText(string? partialResult)
         {
             if (!string.IsNullOrWhiteSpace(partialResult))
-            {
                 NewComment = partialResult.Trim();
-            }
-
         }
 
         private async void ApplyCommentToSelected()
         {
             if (SelectedTraining is null)
             {
-                await Application.Current?.MainPage.DisplayAlert("Selecteer", "Kies eerst een training in de lijst.", "OK");
+                await Application.Current?.MainPage.DisplayAlert(
+                    "Selecteer",
+                    "Kies eerst een training in de lijst.",
+                    "OK");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(NewComment))
             {
-                await Application.Current?.MainPage?.DisplayAlert("Commentaar", "Voer eerst commentaar in.", "OK");
+                await Application.Current?.MainPage?.DisplayAlert(
+                    "Commentaar",
+                    "Voer eerst commentaar in.",
+                    "OK");
                 return;
             }
 
             SelectedTraining.Comment = NewComment;
             NewComment = string.Empty;
             OnPropertyChanged(nameof(SelectedTraining));
+        }
+
+        private async Task QuickShotAsync()
+        {
+            try
+            {
+                if (SelectedTraining == null)
+                {
+                    await Application.Current?.MainPage?.DisplayAlert(
+                        "Geen training geselecteerd",
+                        "Selecteer eerst een training in de lijst om er een foto aan toe te voegen.",
+                        "OK");
+                    return;
+                }
+
+                if (!MediaPicker.Default.IsCaptureSupported)
+                {
+                    await Application.Current?.MainPage?.DisplayAlert(
+                        "Camera",
+                        "Foto nemen wordt niet ondersteund op dit toestel.",
+                        "OK");
+                    return;
+                }
+
+                FileResult? result = await MediaPicker.CapturePhotoAsync();
+                if (result == null) return;
+
+                using Stream source = await result.OpenReadAsync();
+                string fileName = $"training_{SelectedTraining.Id}_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
+                string destPath = Path.Combine(FileSystem.AppDataDirectory, fileName);
+
+                using FileStream dest = File.OpenWrite(destPath);
+                await source.CopyToAsync(dest);
+                await dest.FlushAsync();
+
+                SelectedTraining.Attachments ??= new System.Collections.Generic.List<TrainingAttachmentModel>();
+                SelectedTraining.Attachments.Add(new TrainingAttachmentModel
+                {
+                    Type = "photo",
+                    Uri = destPath, // lokaal bestandspad
+                    FileName = Path.GetFileName(destPath)
+                });
+
+                OnPropertyChanged(nameof(SelectedTraining));
+
+                await Application.Current?.MainPage?.DisplayAlert(
+                    "Foto toegevoegd",
+                    "De foto is lokaal opgeslagen en aan de training gekoppeld.",
+                    "OK");
+            }
+            catch (Exception ex)
+            {
+                await Application.Current?.MainPage?.DisplayAlert(
+                    "Foto",
+                    $"Kon geen foto opslaan: {ex.Message}",
+                    "OK");
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

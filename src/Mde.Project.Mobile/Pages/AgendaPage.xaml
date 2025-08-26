@@ -52,6 +52,25 @@
                                CornerRadius="12"
                                HasShadow="True"
                                BackgroundColor="White">
+                            <!-- 🔸 Highlight geselecteerd item -->
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal">
+                                        <VisualState.Setters>
+                                            <Setter Property="BackgroundColor" Value="White" />
+                                            <Setter Property="BorderColor" Value="Transparent" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Selected">
+                                        <VisualState.Setters>
+                                            <Setter Property="BackgroundColor" Value="#FFFDE7" />
+                                            <!-- lichtgeel -->
+                                            <Setter Property="BorderColor" Value="#FBBF24" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+
                             <Grid ColumnDefinitions="Auto,*"
                                   RowDefinitions="Auto,Auto,Auto">
 
@@ -83,7 +102,7 @@
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
-            <!-- Comment invoer + spraakbediening -->
+            <!-- Comment invoer + spraakbediening + quick foto -->
             <Frame Grid.Row="1"
                    Padding="12"
                    CornerRadius="12"
@@ -97,7 +116,7 @@
                            TextColor="Green"
                            FontAttributes="Italic"
                            IsVisible="{Binding IsListening}"/>
-                    
+
                     <Editor Text="{Binding NewComment}"
                             AutoSize="TextChanges"
                             IsEnabled="{Binding IsListening, Converter={StaticResource InvertedBoolConverter}}"
@@ -114,7 +133,11 @@
                         <Button Text="■ Stop"
                                 Command="{Binding StopDictationCommand}" />
 
-                        <!-- Toepassen op SelectedTraining -->
+                        <!-- 🔹 Snel foto lokaal -->
+                        <Button Text="📸 Snel foto (lokaal)"
+                                Command="{Binding QuickShotCommand}" />
+
+                        <!-- Opslaan comment -->
                         <Button Text="Opslaan bij training"
                                 Command="{Binding ApplyCommentCommand}"
                                 BackgroundColor="#FBBF24"
