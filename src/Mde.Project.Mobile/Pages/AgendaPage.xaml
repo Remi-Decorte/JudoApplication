@@ -3,6 +3,7 @@
     x:Class="Mde.Project.Mobile.Pages.AgendaPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Name="AgendaPageRoot"
     Title="Mijn Agenda">
 
     <Grid RowDefinitions="Auto,*" Padding="16" BackgroundColor="LightGray">
@@ -29,7 +30,7 @@
             <!-- Lijst met trainingen -->
             <CollectionView Grid.Row="0"
                             ItemsSource="{Binding Trainings}"
-                            SelectedItem="{Binding SelectedTraining}"
+                            SelectedItem="{Binding SelectedTraining, Mode=TwoWay}"
                             SelectionMode="Single">
 
                 <CollectionView.EmptyView>
@@ -52,7 +53,15 @@
                                CornerRadius="12"
                                HasShadow="True"
                                BackgroundColor="White">
-                            <!-- 🔸 Highlight geselecteerd item -->
+
+                            <!-- Maak de héle kaart klikbaar -->
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding BindingContext.SelectTrainingCommand, Source={x:Reference AgendaPageRoot}}"
+                                    CommandParameter="{Binding .}" />
+                            </Frame.GestureRecognizers>
+
+                            <!-- Highlight geselecteerd item -->
                             <VisualStateManager.VisualStateGroups>
                                 <VisualStateGroup x:Name="CommonStates">
                                     <VisualState x:Name="Normal">
@@ -64,7 +73,6 @@
                                     <VisualState x:Name="Selected">
                                         <VisualState.Setters>
                                             <Setter Property="BackgroundColor" Value="#FFFDE7" />
-                                            <!-- lichtgeel -->
                                             <Setter Property="BorderColor" Value="#FBBF24" />
                                         </VisualState.Setters>
                                     </VisualState>
@@ -133,7 +141,7 @@
                         <Button Text="■ Stop"
                                 Command="{Binding StopDictationCommand}" />
 
-                        <!-- 🔹 Snel foto lokaal -->
+                        <!-- Snel foto lokaal -->
                         <Button Text="📸 Snel foto (lokaal)"
                                 Command="{Binding QuickShotCommand}" />
 

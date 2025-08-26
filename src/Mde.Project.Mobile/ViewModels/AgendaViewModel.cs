@@ -8,10 +8,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Microsoft.Maui;                
-using Microsoft.Maui.Controls;       
-using Microsoft.Maui.Media;          
-using Microsoft.Maui.Storage;       
-using CommunityToolkit.Maui.Media;   
+using Microsoft.Maui.Controls;      
+using Microsoft.Maui.Media;       
+using Microsoft.Maui.Storage;
+using CommunityToolkit.Maui.Media;
 using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
 
@@ -34,7 +34,15 @@ namespace Mde.Project.Mobile.ViewModels
             StopDictationCommand = new Command(() => _sttCts?.Cancel(), () => IsListening);
             ApplyCommentCommand = new Command(ApplyCommentToSelected);
 
+            // Snelle lokale foto (geen service)
             QuickShotCommand = new Command(async () => await QuickShotAsync());
+
+            // ?? NIEUW: selecteer blok/kaartje op tap
+            SelectTrainingCommand = new Command<TrainingEntryModel?>(t =>
+            {
+                if (t == null) return;
+                SelectedTraining = t;
+            });
         }
 
         // ====== Collections & state ======
@@ -67,7 +75,6 @@ namespace Mde.Project.Mobile.ViewModels
 
             try
             {
-                // jouw service-methode
                 var entries = await _trainingService.GetUserTrainingEntriesAsync();
                 Trainings.Clear();
                 if (entries != null)
@@ -104,7 +111,8 @@ namespace Mde.Project.Mobile.ViewModels
         public ICommand StartDictationCommand { get; }
         public ICommand StopDictationCommand { get; }
         public ICommand ApplyCommentCommand { get; }
-        public ICommand QuickShotCommand { get; } // nieuwe knop
+        public ICommand QuickShotCommand { get; }
+        public ICommand SelectTrainingCommand { get; } // ?? nieuw
 
         private async Task StartDictationAsync()
         {
@@ -193,6 +201,7 @@ namespace Mde.Project.Mobile.ViewModels
             OnPropertyChanged(nameof(SelectedTraining));
         }
 
+        // ====== Snelle lokale foto ======
         private async Task QuickShotAsync()
         {
             try
@@ -230,7 +239,7 @@ namespace Mde.Project.Mobile.ViewModels
                 SelectedTraining.Attachments.Add(new TrainingAttachmentModel
                 {
                     Type = "photo",
-                    Uri = destPath, // lokaal bestandspad
+                    Uri = destPath,
                     FileName = Path.GetFileName(destPath)
                 });
 
