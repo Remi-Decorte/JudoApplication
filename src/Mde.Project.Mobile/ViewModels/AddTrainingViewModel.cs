@@ -87,7 +87,7 @@ namespace Mde.Project.Mobile.ViewModels
         public ICommand DecrementCommand { get; }
 
         // =========== Save locally to the same file as Agenda ===========
-        private async Task SaveAsync()
+        private async Task SaveAsync(int? existingId = null)
         {
             if (IsBusy) return;
             IsBusy = true;
@@ -96,24 +96,37 @@ namespace Mde.Project.Mobile.ViewModels
             {
                 var all = await LoadFromLocalAsync() ?? new List<TrainingEntryModel>();
 
-                // kies nieuw Id
-                int nextId = (all.Count == 0) ? 1 : all.Max(t => t.Id) + 1;
-
-                var entry = new TrainingEntryModel
+                TrainingEntryModel entry;
+                if (existingId.HasValue)
                 {
-                    Id = nextId,
-                    Date = Date,
-                    Type = SelectedType,
-                    Comment = string.Empty,
-                    TechniqueScores = Techniques.ToList(),
-                    Attachments = new() // leeg bij nieuwe
-                };
+                    // update bestaande training
+                    entry = all.FirstOrDefault(t => t.Id == existingId.Value);
+                    if (entry != null)
+                    {
+                        entry.Date = Date;
+                        entry.Type = SelectedType;
+                        entry.TechniqueScores = Techniques.ToList();
+                    }
+                }
+                else
+                {
+                    // nieuwe training
+                    int nextId = (all.Count == 0) ? 1 : all.Max(t => t.Id) + 1;
+                    entry = new TrainingEntryModel
+                    {
+                        Id = nextId,
+                        Date = Date,
+                        Type = SelectedType,
+                        Comment = string.Empty,
+                        TechniqueScores = Techniques.ToList(),
+                        Attachments = new()
+                    };
+                    all.Insert(0, entry);
+                }
 
-                all.Insert(0, entry); // bovenaan tonen
                 await SaveToLocalAsync(all);
 
-                // feedback + terug
-                await Application.Current?.MainPage?.DisplayAlert("Opgeslagen", "Training toegevoegd.", "OK");
+                await Application.Current?.MainPage?.DisplayAlert("Opgeslagen", "Training bewaard.", "OK");
                 await Application.Current!.MainPage!.Navigation.PopAsync();
             }
             catch (Exception ex)
@@ -125,6 +138,7 @@ namespace Mde.Project.Mobile.ViewModels
                 IsBusy = false;
             }
         }
+
 
         // =========== Helpers ===========
         private void UpdateTechniques()
@@ -166,5 +180,21 @@ namespace Mde.Project.Mobile.ViewModels
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? name = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+        public AddTrainingViewModel(TrainingEntryModel trainingToEdit)
+        {
+            Date = trainingToEdit.Date;
+            TrainingTypes = new() { "randori", "kracht", "techniek" };
+            SelectedType = trainingToEdit.Type;
+
+            Techniques = new ObservableCollection<TechniqueScoreModel>(
+                trainingToEdit.TechniqueScores ?? new List<TechniqueScoreModel>()
+            );
+
+            SaveCommand = new Command(async () => await SaveAsync(trainingToEdit.Id), () => !IsBusy);
+            IncrementCommand = new Command<TechniqueScoreModel>(t => { if (t != null) { t.ScoreCount++; OnPropertyChanged(nameof(Techniques)); } });
+            DecrementCommand = new Command<TechniqueScoreModel>(t => { if (t != null && t.ScoreCount > 0) { t.ScoreCount--; OnPropertyChanged(nameof(Techniques)); } });
+        }
+
     }
 }

@@ -166,35 +166,44 @@
 
                     <!-- Acties (wrap + marges i.p.v. Row/ColumnGap) -->
                     <FlexLayout Direction="Row"
-            Wrap="Wrap"
-            JustifyContent="Start"
-            AlignItems="Center"
-            AlignContent="Start">
+                                Wrap="Wrap"
+                                JustifyContent="Start"
+                                AlignItems="Center"
+                                AlignContent="Start">
 
                         <!-- Start dicteren -->
                         <Button Text="🎤 Inspreken"
-          Command="{Binding StartDictationCommand}"
-          BackgroundColor="#34D399"
-          TextColor="Black"
-          Margin="0,0,8,8" />
+                                Command="{Binding StartDictationCommand}"
+                                BackgroundColor="#34D399"
+                                TextColor="Black"
+                                Margin="0,0,8,8" />
 
                         <!-- Stop dicteren -->
                         <Button Text="■ Stop"
-          Command="{Binding StopDictationCommand}"
-          Margin="0,0,8,8" />
+                                Command="{Binding StopDictationCommand}"
+                                Margin="0,0,8,8" />
 
                         <!-- Snel foto lokaal -->
                         <Button Text="📸 Snel foto (lokaal)"
-          Command="{Binding QuickShotCommand}"
-          Margin="0,0,8,8" />
+                                Command="{Binding QuickShotCommand}"
+                                Margin="0,0,8,8" />
 
                         <!-- SAVE (persist lokaal) -->
                         <Button Text="Save"
-          Command="{Binding SaveCommentCommand}"
-          BackgroundColor="#2563EB"
-          TextColor="White"
-          FontAttributes="Bold"
-          Margin="0,0,8,8" />
+                                Command="{Binding SaveCommentCommand}"
+                                BackgroundColor="#2563EB"
+                                TextColor="White"
+                                FontAttributes="Bold"
+                                Margin="0,0,8,8" />
+
+                        <!-- Bewerk training -->
+                        <Button Text="✏️ Bewerk training"
+                                Command="{Binding EditTrainingCommand}"
+                                BackgroundColor="#F59E0B"
+                                TextColor="White"
+                                FontAttributes="Bold"
+                                Margin="0,0,8,8" />
+
                     </FlexLayout>
 
                 </VerticalStackLayout>

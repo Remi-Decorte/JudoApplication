@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -12,7 +12,9 @@ using System.Windows.Input;
 using CommunityToolkit.Maui.Media;
 using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
-using Microsoft.Maui;                
+using Microsoft.Maui;
+using Microsoft.Maui.Media;    // ✅ voor MediaPicker
+using Microsoft.Maui.Storage;  // ✅ voor FileSystem
 
 namespace Mde.Project.Mobile.ViewModels
 {
@@ -21,7 +23,6 @@ namespace Mde.Project.Mobile.ViewModels
         private readonly ITrainingService _trainingService;
         private const string LocalFileName = "trainings_local.json";
 
-        // Speech-to-text
         private readonly ISpeechToText _speech = SpeechToText.Default;
         private CancellationTokenSource? _sttCts;
 
@@ -29,33 +30,25 @@ namespace Mde.Project.Mobile.ViewModels
         {
             _trainingService = trainingService;
 
-            // Voice to text
             StartDictationCommand = new Command(async () => await StartDictationAsync(), () => !IsListening);
             StopDictationCommand = new Command(() => _sttCts?.Cancel(), () => IsListening);
-
-            // Comment opslaan in geselecteerde training + lokaal bewaren
             SaveCommentCommand = new Command(async () => await SaveCommentAsync(), CanSaveComment);
-
-            // Snelle lokale foto
             QuickShotCommand = new Command(async () => await QuickShotAsync());
-
-            // Selecteer box/kaartje
             SelectTrainingCommand = new Command<TrainingEntryModel?>(t =>
             {
                 if (t == null) return;
                 SelectedTraining = t;
             });
+
+            // ✅ nieuw: property bestaat nu ook
+            EditTrainingCommand = new Command(async () => await EditTrainingAsync(), () => SelectedTraining != null);
         }
 
         // ====== Collections & state ======
         public ObservableCollection<TrainingEntryModel> Trainings { get; } = new();
 
         private bool _isBusy;
-        public bool IsBusy
-        {
-            get => _isBusy;
-            set { _isBusy = value; OnPropertyChanged(); }
-        }
+        public bool IsBusy { get => _isBusy; set { _isBusy = value; OnPropertyChanged(); } }
 
         private bool _isListening;
         public bool IsListening
@@ -77,16 +70,11 @@ namespace Mde.Project.Mobile.ViewModels
 
             try
             {
-                // 1) Probeer lokale opslag
                 var local = await LoadFromLocalAsync();
-
-                // 2) Zo niet, haal desnoods van service (als je dat wil blijven doen)
                 if (local == null || local.Count == 0)
                 {
                     var fromService = await _trainingService.GetUserTrainingEntriesAsync();
                     local = fromService?.ToList() ?? new System.Collections.Generic.List<TrainingEntryModel>();
-
-                    // eerste keer ook meteen lokaal wegschrijven
                     await SaveToLocalAsync(local);
                 }
 
@@ -120,18 +108,19 @@ namespace Mde.Project.Mobile.ViewModels
             set
             {
                 _selectedTraining = value;
-                // laad bestaande comment in de editor (of leeg)
                 NewComment = _selectedTraining?.Comment ?? string.Empty;
                 OnPropertyChanged();
                 ((Command)SaveCommentCommand).ChangeCanExecute();
+                ((Command)EditTrainingCommand).ChangeCanExecute();   // ✅ enable/disable “Bewerk” knop
             }
         }
 
         public ICommand StartDictationCommand { get; }
         public ICommand StopDictationCommand { get; }
-        public ICommand SaveCommentCommand { get; } // "Save"-knop
+        public ICommand SaveCommentCommand { get; }
         public ICommand QuickShotCommand { get; }
         public ICommand SelectTrainingCommand { get; }
+        public ICommand EditTrainingCommand { get; }   // ✅ ontbrekende property toegevoegd
 
         private bool CanSaveComment() =>
             SelectedTraining != null && !string.IsNullOrWhiteSpace(NewComment);
@@ -140,40 +129,29 @@ namespace Mde.Project.Mobile.ViewModels
         {
             if (!CanSaveComment()) return;
 
-            // 1) update geselecteerde training
             SelectedTraining!.Comment = NewComment.Trim();
             OnPropertyChanged(nameof(SelectedTraining));
-
-            // 2) lokaal opslaan: hele lijst naar JSON
             await SaveToLocalAsync(Trainings.ToList());
 
-            // 3) korte feedback
-            await Application.Current?.MainPage?.DisplayAlert(
-                "Opgeslagen",
-                "Je comment is bewaard en blijft beschikbaar bij volgende opstart.",
-                "OK");
+            await Application.Current?.MainPage?.DisplayAlert("Opgeslagen",
+                "Je comment is bewaard en blijft beschikbaar bij volgende opstart.", "OK");
         }
 
-        // ====== Snelle lokale foto ======
         private async Task QuickShotAsync()
         {
             try
             {
                 if (SelectedTraining == null)
                 {
-                    await Application.Current?.MainPage?.DisplayAlert(
-                        "Geen training geselecteerd",
-                        "Selecteer eerst een training in de lijst om er een foto aan toe te voegen.",
-                        "OK");
+                    await Application.Current?.MainPage?.DisplayAlert("Geen training geselecteerd",
+                        "Selecteer eerst een training in de lijst om er een foto aan toe te voegen.", "OK");
                     return;
                 }
 
                 if (!MediaPicker.Default.IsCaptureSupported)
                 {
-                    await Application.Current?.MainPage?.DisplayAlert(
-                        "Camera",
-                        "Foto nemen wordt niet ondersteund op dit toestel.",
-                        "OK");
+                    await Application.Current?.MainPage?.DisplayAlert("Camera",
+                        "Foto nemen wordt niet ondersteund op dit toestel.", "OK");
                     return;
                 }
 
@@ -197,33 +175,22 @@ namespace Mde.Project.Mobile.ViewModels
                 });
 
                 OnPropertyChanged(nameof(SelectedTraining));
-
-                // meteen lokaal bewaren zodat foto-koppeling ook persistent is
                 await SaveToLocalAsync(Trainings.ToList());
 
-                await Application.Current?.MainPage?.DisplayAlert(
-                    "Foto toegevoegd",
-                    "De foto is lokaal opgeslagen en aan de training gekoppeld.",
-                    "OK");
+                await Application.Current?.MainPage?.DisplayAlert("Foto toegevoegd",
+                    "De foto is lokaal opgeslagen en aan de training gekoppeld.", "OK");
             }
             catch (Exception ex)
             {
-                await Application.Current?.MainPage?.DisplayAlert(
-                    "Foto",
-                    $"Kon geen foto opslaan: {ex.Message}",
-                    "OK");
+                await Application.Current?.MainPage?.DisplayAlert("Foto", $"Kon geen foto opslaan: {ex.Message}", "OK");
             }
         }
 
-        // ====== Lokale opslag helpers ======
         private string LocalPath => Path.Combine(FileSystem.AppDataDirectory, LocalFileName);
 
         private async Task SaveToLocalAsync(System.Collections.Generic.List<TrainingEntryModel> list)
         {
-            var json = JsonSerializer.Serialize(list, new JsonSerializerOptions
-            {
-                WriteIndented = false
-            });
+            var json = JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = false });
             await File.WriteAllTextAsync(LocalPath, json);
         }
 
@@ -233,14 +200,9 @@ namespace Mde.Project.Mobile.ViewModels
             {
                 if (!File.Exists(LocalPath)) return null;
                 var json = await File.ReadAllTextAsync(LocalPath);
-                var list = JsonSerializer.Deserialize<System.Collections.Generic.List<TrainingEntryModel>>(json);
-                return list;
+                return JsonSerializer.Deserialize<System.Collections.Generic.List<TrainingEntryModel>>(json);
             }
-            catch
-            {
-                // corrupt bestand? negeer en doe alsof er niets is
-                return null;
-            }
+            catch { return null; }
         }
 
         // ====== STT ======
@@ -260,7 +222,6 @@ namespace Mde.Project.Mobile.ViewModels
                 _sttCts?.Cancel();
                 _sttCts?.Dispose();
                 _sttCts = new CancellationTokenSource();
-
                 IsListening = true;
 
                 try
@@ -268,8 +229,7 @@ namespace Mde.Project.Mobile.ViewModels
                     var result = await _speech.ListenAsync(
                         culture: CultureInfo.CurrentCulture,
                         recognitionResult: new Progress<string?>(OnSpeechRecognitionUpdate),
-                        cancellationToken: _sttCts.Token
-                    );
+                        cancellationToken: _sttCts.Token);
 
                     if (!string.IsNullOrWhiteSpace(result.Text))
                         NewComment = result.Text.Trim();
@@ -294,16 +254,27 @@ namespace Mde.Project.Mobile.ViewModels
 
         private void OnSpeechRecognitionUpdate(string? partialResult)
         {
-            if (MainThread.IsMainThread)
-                UpdatePartialText(partialResult);
-            else
-                MainThread.BeginInvokeOnMainThread(() => UpdatePartialText(partialResult));
+            if (MainThread.IsMainThread) UpdatePartialText(partialResult);
+            else MainThread.BeginInvokeOnMainThread(() => UpdatePartialText(partialResult));
         }
 
         private void UpdatePartialText(string? partialResult)
         {
             if (!string.IsNullOrWhiteSpace(partialResult))
                 NewComment = partialResult.Trim();
+        }
+
+        private async Task EditTrainingAsync()
+        {
+            if (SelectedTraining == null)
+            {
+                await Application.Current?.MainPage?.DisplayAlert("Geen selectie", "Kies eerst een training om te bewerken.", "OK");
+                return;
+            }
+
+            await Application.Current?.MainPage?.Navigation.PushAsync(
+                new Pages.AddTrainingPage(new AddTrainingViewModel(SelectedTraining))
+            );
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
