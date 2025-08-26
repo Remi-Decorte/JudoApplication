@@ -1,5 +1,8 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Windows.Input;
@@ -11,6 +14,7 @@ namespace Mde.Project.Mobile.ViewModels
     public class AddTrainingViewModel : INotifyPropertyChanged
     {
         private const string LocalFileName = "trainings_local.json";
+        private int? _editingId = null; // null = nieuwe training, anders bewerken
 
         public AddTrainingViewModel()
         {
@@ -21,18 +25,32 @@ namespace Mde.Project.Mobile.ViewModels
             Techniques = DefaultRandoriTechniques();
 
             SaveCommand = new Command(async () => await SaveAsync(), () => !IsBusy);
+
+            // Zorg dat UI altijd updatet, ook als TechniqueScoreModel geen INotifyPropertyChanged heeft
             IncrementCommand = new Command<TechniqueScoreModel>(t =>
             {
                 if (t == null) return;
                 t.ScoreCount++;
-                OnPropertyChanged(nameof(Techniques));
+                RefreshTechniques(); // forceer UI-refresh
             });
+
             DecrementCommand = new Command<TechniqueScoreModel>(t =>
             {
                 if (t == null) return;
                 if (t.ScoreCount > 0) t.ScoreCount--;
-                OnPropertyChanged(nameof(Techniques));
+                RefreshTechniques(); // forceer UI-refresh
             });
+        }
+
+        // Deze ctor gebruik je bij "Bewerk training"
+        public AddTrainingViewModel(TrainingEntryModel trainingToEdit) : this()
+        {
+            _editingId = trainingToEdit.Id;
+            Date = trainingToEdit.Date;
+            SelectedType = trainingToEdit.Type;
+            Techniques = new ObservableCollection<TechniqueScoreModel>(
+                trainingToEdit.TechniqueScores ?? new System.Collections.Generic.List<TechniqueScoreModel>()
+            );
         }
 
         // =========== Properties ===========
@@ -43,9 +61,9 @@ namespace Mde.Project.Mobile.ViewModels
             set { _date = value; OnPropertyChanged(); }
         }
 
-        public List<string> TrainingTypes { get; }
+        public System.Collections.Generic.List<string> TrainingTypes { get; }
 
-        private string _selectedType;
+        private string _selectedType = "randori";
         public string SelectedType
         {
             get => _selectedType;
@@ -87,32 +105,32 @@ namespace Mde.Project.Mobile.ViewModels
         public ICommand DecrementCommand { get; }
 
         // =========== Save locally to the same file as Agenda ===========
-        private async Task SaveAsync(int? existingId = null)
+        private async System.Threading.Tasks.Task SaveAsync()
         {
             if (IsBusy) return;
             IsBusy = true;
 
             try
             {
-                var all = await LoadFromLocalAsync() ?? new List<TrainingEntryModel>();
+                var all = await LoadFromLocalAsync() ?? new System.Collections.Generic.List<TrainingEntryModel>();
 
-                TrainingEntryModel entry;
-                if (existingId.HasValue)
+                if (_editingId.HasValue)
                 {
-                    // update bestaande training
-                    entry = all.FirstOrDefault(t => t.Id == existingId.Value);
-                    if (entry != null)
+                    // Update bestaande training
+                    var existing = all.FirstOrDefault(t => t.Id == _editingId.Value);
+                    if (existing != null)
                     {
-                        entry.Date = Date;
-                        entry.Type = SelectedType;
-                        entry.TechniqueScores = Techniques.ToList();
+                        existing.Date = Date;
+                        existing.Type = SelectedType;
+                        existing.TechniqueScores = Techniques.ToList();
+                        // Comment & Attachments blijven zoals ze waren (of voeg hier toe als je wil)
                     }
                 }
                 else
                 {
-                    // nieuwe training
+                    // Nieuwe training
                     int nextId = (all.Count == 0) ? 1 : all.Max(t => t.Id) + 1;
-                    entry = new TrainingEntryModel
+                    var entry = new TrainingEntryModel
                     {
                         Id = nextId,
                         Date = Date,
@@ -139,7 +157,6 @@ namespace Mde.Project.Mobile.ViewModels
             }
         }
 
-
         // =========== Helpers ===========
         private void UpdateTechniques()
         {
@@ -155,21 +172,28 @@ namespace Mde.Project.Mobile.ViewModels
                 new TechniqueScoreModel { Technique = "Uki Goshi", ScoreCount = 0 }
             };
 
+        // Force UI refresh van de lijst zonder volledige pagina te herladen
+        private void RefreshTechniques()
+        {
+            // Nieuwe instantie met dezelfde items → CollectionChanged: Reset → UI verversing
+            Techniques = new ObservableCollection<TechniqueScoreModel>(Techniques);
+        }
+
         private string LocalPath => Path.Combine(FileSystem.AppDataDirectory, LocalFileName);
 
-        private async Task SaveToLocalAsync(List<TrainingEntryModel> list)
+        private async System.Threading.Tasks.Task SaveToLocalAsync(System.Collections.Generic.List<TrainingEntryModel> list)
         {
             var json = JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = false });
             await File.WriteAllTextAsync(LocalPath, json);
         }
 
-        private async Task<List<TrainingEntryModel>?> LoadFromLocalAsync()
+        private async System.Threading.Tasks.Task<System.Collections.Generic.List<TrainingEntryModel>?> LoadFromLocalAsync()
         {
             try
             {
                 if (!File.Exists(LocalPath)) return null;
                 var json = await File.ReadAllTextAsync(LocalPath);
-                return JsonSerializer.Deserialize<List<TrainingEntryModel>>(json);
+                return JsonSerializer.Deserialize<System.Collections.Generic.List<TrainingEntryModel>>(json);
             }
             catch
             {
@@ -177,24 +201,9 @@ namespace Mde.Project.Mobile.ViewModels
             }
         }
 
+        // INotifyPropertyChanged
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? name = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-        public AddTrainingViewModel(TrainingEntryModel trainingToEdit)
-        {
-            Date = trainingToEdit.Date;
-            TrainingTypes = new() { "randori", "kracht", "techniek" };
-            SelectedType = trainingToEdit.Type;
-
-            Techniques = new ObservableCollection<TechniqueScoreModel>(
-                trainingToEdit.TechniqueScores ?? new List<TechniqueScoreModel>()
-            );
-
-            SaveCommand = new Command(async () => await SaveAsync(trainingToEdit.Id), () => !IsBusy);
-            IncrementCommand = new Command<TechniqueScoreModel>(t => { if (t != null) { t.ScoreCount++; OnPropertyChanged(nameof(Techniques)); } });
-            DecrementCommand = new Command<TechniqueScoreModel>(t => { if (t != null && t.ScoreCount > 0) { t.ScoreCount--; OnPropertyChanged(nameof(Techniques)); } });
-        }
-
     }
 }
