@@ -1,13 +1,10 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 using System.Windows.Input;
 using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
-using Microsoft.Maui;                     // MainThread, Application
-using Microsoft.Maui.Storage;            // FileSystem
-using Microsoft.Maui.Devices.Sensors;    // Geolocation
+using Microsoft.Maui.Devices.Sensors; // Geolocation
 
 namespace Mde.Project.Mobile.ViewModels
 {
@@ -15,66 +12,33 @@ namespace Mde.Project.Mobile.ViewModels
     {
         private readonly IEventService _eventService;
 
-        private const string LocalFileName = "events_local.json";
-        private string LocalPath => Path.Combine(FileSystem.AppDataDirectory, LocalFileName);
-
         public EventsViewModel(IEventService eventService)
         {
             _eventService = eventService;
 
             Events = new ObservableCollection<EventModel>();
-            RefreshCommand = new Command(async () => await LoadEventsAsync());
 
-            // add-box defaults
-            NewEventDate = DateTime.Today.AddDays(1);
-
-            // add-box commands
+            // 1) Commands eerst initialiseren (voorkomt NRE)
+            RefreshCommand = new Command(async () => await LoadEventsAsync(), () => !IsBusy);
             ToggleAddBoxCommand = new Command(() => IsAdding = !IsAdding);
+            _saveNewEventCommand = new Command(async () => await SaveNewEventAsync(), CanSaveNewEvent);
             UseMyLocationCommand = new Command(async () => await FillMyLocationAsync());
-            SaveNewEventCommand = new Command(async () => await SaveNewEventAsync(), CanSaveNewEvent);
+
+            // 2) Standaardwaarden NA de commands
+            _newEventDate = DateTime.Today;
         }
 
-        // ========== lijst ==========
+        // ================= Data =================
         public ObservableCollection<EventModel> Events { get; }
 
         private bool _isBusy;
         public bool IsBusy
         {
             get => _isBusy;
-            set { _isBusy = value; OnPropertyChanged(); }
+            set { _isBusy = value; OnPropertyChanged(); (RefreshCommand as Command)?.ChangeCanExecute(); }
         }
 
-        public ICommand RefreshCommand { get; }
-
-        public async Task LoadEventsAsync()
-        {
-            if (IsBusy) return;
-            IsBusy = true;
-            try
-            {
-                Events.Clear();
-
-                // 1) van API
-                var fromApi = await _eventService.GetUpcomingEventsAsync();
-                if (fromApi != null)
-                    foreach (var e in fromApi) Events.Add(e);
-
-                // 2) + lokaal toegevoegde events
-                var local = await LoadLocalAsync();
-                if (local != null)
-                {
-                    // alleen toekomstige events tonen
-                    foreach (var e in local.Where(x => x.Date >= DateTime.Today))
-                        Events.Add(e);
-                }
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-
-        // ========== add-box state ==========
+        // ================= Add-box state =================
         private bool _isAdding;
         public bool IsAdding
         {
@@ -86,41 +50,88 @@ namespace Mde.Project.Mobile.ViewModels
         public string NewEventTitle
         {
             get => _newEventTitle;
-            set { _newEventTitle = value; OnPropertyChanged(); ((Command)SaveNewEventCommand).ChangeCanExecute(); }
+            set { _newEventTitle = value; OnPropertyChanged(); RaiseSaveCanExecuteChanged(); }
         }
 
         private DateTime _newEventDate;
         public DateTime NewEventDate
         {
             get => _newEventDate;
-            set { _newEventDate = value; OnPropertyChanged(); ((Command)SaveNewEventCommand).ChangeCanExecute(); }
+            set { _newEventDate = value; OnPropertyChanged(); RaiseSaveCanExecuteChanged(); }
         }
 
         private string _newEventLocation = string.Empty;
         public string NewEventLocation
         {
             get => _newEventLocation;
-            set { _newEventLocation = value; OnPropertyChanged(); ((Command)SaveNewEventCommand).ChangeCanExecute(); }
+            set { _newEventLocation = value; OnPropertyChanged(); RaiseSaveCanExecuteChanged(); }
         }
 
+        // ================= Commands =================
+        public ICommand RefreshCommand { get; }
         public ICommand ToggleAddBoxCommand { get; }
         public ICommand UseMyLocationCommand { get; }
-        public ICommand SaveNewEventCommand { get; }
 
-        private bool CanSaveNewEvent()
-            => !string.IsNullOrWhiteSpace(NewEventTitle)
-               && NewEventDate != default;
+        private readonly Command _saveNewEventCommand;
+        public ICommand SaveNewEventCommand => _saveNewEventCommand;
+
+        private void RaiseSaveCanExecuteChanged() => _saveNewEventCommand?.ChangeCanExecute();
+
+        private bool CanSaveNewEvent() =>
+            !string.IsNullOrWhiteSpace(NewEventTitle)
+            && NewEventDate != default
+            && !string.IsNullOrWhiteSpace(NewEventLocation);
+
+        // ================= Actions =================
+        public async Task LoadEventsAsync()
+        {
+            if (IsBusy) return;
+            IsBusy = true;
+            try
+            {
+                Events.Clear();
+                var list = await _eventService.GetUpcomingEventsAsync();
+                if (list != null)
+                    foreach (var e in list) Events.Add(e);
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        private async Task SaveNewEventAsync()
+        {
+            if (!CanSaveNewEvent()) return;
+
+            // Simple local add (geen backend post – hou het simpel)
+            Events.Insert(0, new EventModel
+            {
+                Title = NewEventTitle.Trim(),
+                Date = NewEventDate,
+                Location = NewEventLocation.Trim()
+            });
+
+            // reset form & verberg add-box
+            NewEventTitle = string.Empty;
+            NewEventDate = DateTime.Today;
+            NewEventLocation = string.Empty;
+            IsAdding = false;
+
+            await Application.Current?.MainPage?.DisplayAlert("Event", "Event toegevoegd.", "OK");
+        }
 
         private async Task FillMyLocationAsync()
         {
             try
             {
-                var request = new GeolocationRequest(GeolocationAccuracy.Medium);
+                var request = new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(10));
                 var location = await Geolocation.Default.GetLocationAsync(request);
 
                 if (location != null)
                 {
-                    NewEventLocation = $"{location.Latitude:0.00000},{location.Longitude:0.00000}";
+                    // Simpel: toon coördinaten. (Reverse geocoding kan later.)
+                    NewEventLocation = $"{location.Latitude:0.0000}, {location.Longitude:0.0000}";
                 }
                 else
                 {
@@ -129,59 +140,11 @@ namespace Mde.Project.Mobile.ViewModels
             }
             catch (Exception ex)
             {
-                await Application.Current?.MainPage?.DisplayAlert("Locatie", $"Geen toegang of niet beschikbaar: {ex.Message}", "OK");
+                await Application.Current?.MainPage?.DisplayAlert("Locatie", $"Fout: {ex.Message}", "OK");
             }
         }
 
-        private async Task SaveNewEventAsync()
-        {
-            if (!CanSaveNewEvent()) return;
-
-            // 1) voeg toe aan UI
-            var model = new EventModel
-            {
-                Title = NewEventTitle.Trim(),
-                Date = NewEventDate,
-                Location = string.IsNullOrWhiteSpace(NewEventLocation) ? "Onbekend" : NewEventLocation.Trim()
-            };
-            Events.Add(model);
-
-            // 2) append lokaal
-            var existing = await LoadLocalAsync() ?? new List<EventModel>();
-            existing.Add(model);
-            await SaveLocalAsync(existing);
-
-            // 3) box resetten & feedback
-            NewEventTitle = string.Empty;
-            NewEventLocation = string.Empty;
-            NewEventDate = DateTime.Today.AddDays(1);
-            IsAdding = false;
-
-            await Application.Current?.MainPage?.DisplayAlert("Event", "Event opgeslagen (lokaal).", "OK");
-        }
-
-        // ========== local storage ==========
-        private async Task<List<EventModel>?> LoadLocalAsync()
-        {
-            try
-            {
-                if (!File.Exists(LocalPath)) return null;
-                var json = await File.ReadAllTextAsync(LocalPath);
-                return JsonSerializer.Deserialize<List<EventModel>>(json);
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private async Task SaveLocalAsync(List<EventModel> list)
-        {
-            var json = JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = false });
-            await File.WriteAllTextAsync(LocalPath, json);
-        }
-
-        // ========== INotifyPropertyChanged ==========
+        // ================= INotifyPropertyChanged =================
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? name = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
