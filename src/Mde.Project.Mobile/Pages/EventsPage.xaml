@@ -4,9 +4,16 @@
              x:Class="Mde.Project.Mobile.Pages.EventsPage"
              Title="Events">
 
-    <Grid BackgroundColor="LightGray" Padding="0" RowDefinitions="Auto,*">
+    <Grid BackgroundColor="LightGray" Padding="0" RowDefinitions="Auto,Auto,*">
+
         <!-- Header (matching style) -->
-        <Grid BackgroundColor="White" Padding="15" ColumnDefinitions="*,Auto" RowDefinitions="Auto" Margin="0,0,0,2">
+        <Grid Grid.Row="0"
+              BackgroundColor="White"
+              Padding="15"
+              ColumnDefinitions="*,Auto"
+              Margin="0,0,0,2">
+
+            <!-- Logo links -->
             <HorizontalStackLayout Spacing="30">
                 <Label>
                     <Label.FormattedText>
@@ -17,10 +24,56 @@
                     </Label.FormattedText>
                 </Label>
             </HorizontalStackLayout>
+
+            <!-- + Event knop rechts -->
+            <Button Grid.Column="1"
+                    Text="+ Event"
+                    Padding="12,8"
+                    BackgroundColor="#FBBF24"
+                    TextColor="Black"
+                    FontAttributes="Bold"
+                    Command="{Binding ToggleAddBoxCommand}" />
         </Grid>
 
-        <!-- Content -->
-        <RefreshView Grid.Row="1" Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsBusy}">
+        <!-- Simpele 'event toevoegen' box -->
+        <Frame Grid.Row="1"
+               Margin="10,8"
+               Padding="12"
+               CornerRadius="12"
+               HasShadow="True"
+               BackgroundColor="White"
+               IsVisible="{Binding IsAdding}">
+            <VerticalStackLayout Spacing="8">
+
+                <Label Text="Nieuw event" FontAttributes="Bold" />
+
+                <Entry Placeholder="Titel"
+                       Text="{Binding NewEventTitle}" />
+
+                <DatePicker Date="{Binding NewEventDate}" />
+
+                <HorizontalStackLayout Spacing="8">
+                    <Entry Placeholder="Locatie (stad of lat,long)"
+                           HorizontalOptions="FillAndExpand"
+                           Text="{Binding NewEventLocation}" />
+                    <Button Text="Gebruik mijn locatie"
+                            Command="{Binding UseMyLocationCommand}" />
+                </HorizontalStackLayout>
+
+                <HorizontalStackLayout Spacing="8">
+                    <Button Text="Opslaan"
+                            BackgroundColor="#2563EB"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            Command="{Binding SaveNewEventCommand}" />
+                    <Button Text="Annuleren"
+                            Command="{Binding ToggleAddBoxCommand}" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+        </Frame>
+
+        <!-- Lijst -->
+        <RefreshView Grid.Row="2" Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsBusy}">
             <CollectionView ItemsSource="{Binding Events}" Margin="10">
                 <CollectionView.EmptyView>
                     <VerticalStackLayout Padding="20" Spacing="6" HorizontalOptions="Center" VerticalOptions="Center">
@@ -44,3 +97,4 @@
         </RefreshView>
     </Grid>
 </ContentPage>
+
