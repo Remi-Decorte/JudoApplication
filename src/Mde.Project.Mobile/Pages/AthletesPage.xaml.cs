@@ -20,29 +20,18 @@ namespace Mde.Project.Mobile.Pages
             await _vm.LoadAsync();
         }
 
-        private void OnGoHome(object sender, EventArgs e)
-        {
-            // optioneel: Shell navigation of Navigation.PopToRootAsync();
-        }
+        private void OnGoHome(object sender, EventArgs e) { /* ... */ }
+        private void OnGoAgenda(object sender, EventArgs e) { /* ... */ }
 
-        private void OnGoAgenda(object sender, EventArgs e)
+        // 🔹 Tapped op het hele kaartje
+        private async void OnJudokaTapped(object sender, TappedEventArgs e)
         {
-            // optioneel: Shell navigation naar Agenda
-        }
+            if (sender is not Frame frame) return;
+            if (frame.BindingContext is not JudokaModel judoka) return;
 
-        // 🔹 aangeroepen door SelectionChanged="OnJudokaSelected" in XAML
-        private async void OnJudokaSelected(object sender, SelectionChangedEventArgs e)
-        {
-            var selected = e.CurrentSelection?.FirstOrDefault() as JudokaModel;
-            if (selected == null) return;
-
-            // navigeer naar detailpagina
-            var vm = new AthleteDetailViewModel(selected);
+            var vm = new AthleteDetailViewModel(judoka);
             var page = new AthleteDetailPage(vm);
             await Navigation.PushAsync(page);
-
-            // selectie wissen zodat opnieuw klikken kan
-            if (sender is CollectionView cv) cv.SelectedItem = null;
         }
     }
 }
