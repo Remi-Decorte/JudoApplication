@@ -22,7 +22,7 @@
 
                     <!-- Navigatieknoppen -->
                     <HorizontalStackLayout Spacing="20" VerticalOptions="Center">
-                        <Button Text="Events" BackgroundColor="Transparent" TextColor="Black"/>
+                        <Button Text="Events" BackgroundColor="Transparent" TextColor="Black" Clicked="NavigateToEvents"/>
                         <Button Text="Athletes" BackgroundColor="Transparent" TextColor="Black" Clicked="NavigateToAthletes"/>
                         <Button Text="Agenda" BackgroundColor="Transparent" TextColor="Black" Clicked="NavigateToAgenda"/>
                     </HorizontalStackLayout>

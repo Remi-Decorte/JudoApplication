@@ -7,13 +7,15 @@ namespace Mde.Project.Mobile.Pages
         private readonly HomePageViewModel _vm;
         private readonly AthletesPage _athletesPage;
         private readonly AgendaPage _agendaPage;
+        private readonly EventsPage _eventsPage;
 
-        public HomePage(HomePageViewModel vm, AthletesPage athletesPage, AgendaPage agendaPage)
+        public HomePage(HomePageViewModel vm, AthletesPage athletesPage, AgendaPage agendaPage, EventsPage eventsPage)
         {
             InitializeComponent();
             _vm = vm;
             _athletesPage = athletesPage;
             _agendaPage = agendaPage;
+            _eventsPage = eventsPage; 
             BindingContext = _vm;
         }
 
@@ -31,6 +33,10 @@ namespace Mde.Project.Mobile.Pages
         private async void NavigateToAgenda(object sender, EventArgs e)
         {
             await Navigation.PushAsync(_agendaPage);
+        }
+        private async void NavigateToEvents(object sender, EventArgs e)
+        { 
+            await Navigation.PushAsync(_eventsPage); 
         }
     }
 }

@@ -39,6 +39,7 @@ namespace Mde.Project.Mobile
             builder.Services.AddTransient<AthletesViewModel>();
             builder.Services.AddTransient<AddTrainingViewModel>();
             builder.Services.AddTransient<RegisterViewModel>();
+            builder.Services.AddTransient<EventsViewModel>();
 
             // Pages
             builder.Services.AddTransient<AgendaPage>();
@@ -47,6 +48,7 @@ namespace Mde.Project.Mobile
             builder.Services.AddTransient<AthletesPage>();
             builder.Services.AddTransient<AddTrainingPage>();
             builder.Services.AddTransient<RegisterPage>();
+            builder.Services.AddTransient<EventsPage>();
 
 #if DEBUG
             builder.Logging.AddDebug();
