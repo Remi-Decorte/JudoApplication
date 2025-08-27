@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Mde.Project.Mobile.Pages.AthleteDetailPage"
+             Title="Athlete detail">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="16" BackgroundColor="LightGray">
+
+            <Label Text="{Binding FullName}"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+
+            <!-- Nieuwe comment toevoegen -->
+            <Editor Text="{Binding NewComment}"
+                    Placeholder="Voeg nieuwe comment toe..."
+                    AutoSize="TextChanges"
+                    HeightRequest="100"
+                    BackgroundColor="White" />
+
+            <Button Text="Comment opslaan"
+                    Command="{Binding AddNoteCommand}"
+                    BackgroundColor="#FBBF24"
+                    TextColor="Black"
+                    FontAttributes="Bold" />
+
+            <!-- Bestaande notities -->
+            <CollectionView ItemsSource="{Binding Notes}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame BackgroundColor="White" Padding="10" CornerRadius="8" Margin="5">
+                            <VerticalStackLayout>
+                                <Label Text="{Binding Date, StringFormat='{}{0:dd/MM/yyyy}'}"
+                                       FontAttributes="Bold"
+                                       TextColor="Gray" />
+                                <Label Text="{Binding Comment}"
+                                       FontSize="14"
+                                       TextColor="Black"
+                                       LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

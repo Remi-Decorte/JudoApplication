@@ -14,15 +14,15 @@
                         <Label.FormattedText>
                             <FormattedString>
                                 <Span Text="JUDO" FontSize="24" FontAttributes="Bold" TextColor="Black"/>
-                                <Span Text="TV" FontSize="24" FontAttributes="Bold" TextColor="#FBBF24"/>
+                                <Span Text="TV"   FontSize="24" FontAttributes="Bold" TextColor="#FBBF24"/>
                             </FormattedString>
                         </Label.FormattedText>
                     </Label>
 
                     <HorizontalStackLayout Spacing="20" VerticalOptions="Center">
-                        <Button Text="Home" BackgroundColor="Transparent" TextColor="Black" Clicked="OnGoHome"/>
+                        <Button Text="Home"    BackgroundColor="Transparent" TextColor="Black"   Clicked="OnGoHome"/>
                         <Button Text="Athletes" BackgroundColor="Transparent" TextColor="#FBBF24"/>
-                        <Button Text="Agenda" BackgroundColor="Transparent" TextColor="Black" Clicked="OnGoAgenda"/>
+                        <Button Text="Agenda"  BackgroundColor="Transparent" TextColor="Black"   Clicked="OnGoAgenda"/>
                     </HorizontalStackLayout>
                 </HorizontalStackLayout>
             </Grid>
@@ -34,13 +34,16 @@
             </HorizontalStackLayout>
 
             <!-- Judoka lijst -->
-            <CollectionView ItemsSource="{Binding Judokas}" Margin="10">
+            <CollectionView ItemsSource="{Binding Judokas}"
+                            Margin="10"
+                            SelectionMode="Single"
+                            SelectionChanged="OnJudokaSelected">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Frame BackgroundColor="White" Padding="15" CornerRadius="10" Margin="5" HasShadow="True">
                             <VerticalStackLayout>
                                 <Label Text="{Binding FullName}" FontSize="18" FontAttributes="Bold" />
-                                <Label Text="{Binding Country}" FontSize="14" TextColor="Gray" />
+                                <Label Text="{Binding Country}"  FontSize="14" TextColor="Gray" />
                                 <Label Text="{Binding Category}" FontSize="12" TextColor="#FBBF24" />
                             </VerticalStackLayout>
                         </Frame>

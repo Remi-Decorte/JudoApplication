@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
+using System.Linq;
 
 namespace Mde.Project.Mobile.ViewModels
 {
@@ -13,13 +14,13 @@ namespace Mde.Project.Mobile.ViewModels
         public AthletesViewModel(IJudokaService judokaService)
         {
             _judokaService = judokaService;
-            _ = LoadCategoriesAsync();
         }
 
+        // Publieke collecties gebonden in XAML
         public ObservableCollection<string> Categories { get; } = new();
         public ObservableCollection<JudokaModel> Judokas { get; } = new();
 
-        private string _selectedCategory = "-60kg";
+        private string _selectedCategory = string.Empty;
         public string SelectedCategory
         {
             get => _selectedCategory;
@@ -39,27 +40,45 @@ namespace Mde.Project.Mobile.ViewModels
             set { _isBusy = value; OnPropertyChanged(); }
         }
 
+        // ?? Eén publieke entrypoint voor de pagina
+        public async Task LoadAsync()
+        {
+            // Eerst categorieën (zet SelectedCategory) en daarna lijst
+            await LoadCategoriesAsync();
+            await LoadJudokasAsync();
+        }
+
         public async Task LoadCategoriesAsync()
         {
-            Categories.Clear();
+            if (IsBusy) return;
+            IsBusy = true;
 
-            var cats = await _judokaService.GetCategoriesAsync();
-            if (cats?.Count > 0)
+            try
             {
-                foreach (var c in cats) Categories.Add(c);
-                if (!cats.Contains(SelectedCategory))
-                    SelectedCategory = cats.First();
-            }
-            else
-            {
-                // hardcoded
-                var defaults = new[] { "-60kg", "-66kg", "-73kg", "-81kg", "-90kg" };
-                foreach (var c in defaults) Categories.Add(c);
-                if (!defaults.Contains(SelectedCategory))
-                    SelectedCategory = defaults.First();
-            }
+                Categories.Clear();
 
-            await LoadJudokasAsync();
+                var cats = await _judokaService.GetCategoriesAsync();
+                if (cats != null && cats.Count > 0)
+                {
+                    foreach (var c in cats) Categories.Add(c);
+
+                    // Zorg dat SelectedCategory geldig is
+                    if (string.IsNullOrWhiteSpace(SelectedCategory) || !cats.Contains(SelectedCategory))
+                        SelectedCategory = cats.First();
+                }
+                else
+                {
+                    // fallback
+                    var defaults = new[] { "-60", "-66", "-73", "-81", "-90", "-100", "+100" };
+                    foreach (var c in defaults) Categories.Add(c);
+                    if (string.IsNullOrWhiteSpace(SelectedCategory) || !defaults.Contains(SelectedCategory))
+                        SelectedCategory = defaults.First();
+                }
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
 
         public async Task LoadJudokasAsync()
@@ -71,7 +90,10 @@ namespace Mde.Project.Mobile.ViewModels
             {
                 Judokas.Clear();
                 var list = await _judokaService.GetJudokasByCategoryAsync(SelectedCategory);
-                foreach (var j in list) Judokas.Add(j);
+                if (list != null)
+                {
+                    foreach (var j in list) Judokas.Add(j);
+                }
             }
             finally
             {
@@ -84,5 +106,3 @@ namespace Mde.Project.Mobile.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }
-
-

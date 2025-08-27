@@ -1,3 +1,4 @@
+using Mde.Project.Mobile.Models;
 using Mde.Project.Mobile.ViewModels;
 
 namespace Mde.Project.Mobile.Pages
@@ -6,7 +7,6 @@ namespace Mde.Project.Mobile.Pages
     {
         private readonly AthletesViewModel _vm;
 
-        // ✅ DI levert het ViewModel aan
         public AthletesPage(AthletesViewModel vm)
         {
             InitializeComponent();
@@ -17,18 +17,32 @@ namespace Mde.Project.Mobile.Pages
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            // laad categorieën + judoka’s (VM regelt SelectedCategory)
-            await _vm.LoadCategoriesAsync();
+            await _vm.LoadAsync();
         }
 
         private void OnGoHome(object sender, EventArgs e)
         {
-
+            // optioneel: Shell navigation of Navigation.PopToRootAsync();
         }
 
         private void OnGoAgenda(object sender, EventArgs e)
         {
+            // optioneel: Shell navigation naar Agenda
+        }
 
+        // 🔹 aangeroepen door SelectionChanged="OnJudokaSelected" in XAML
+        private async void OnJudokaSelected(object sender, SelectionChangedEventArgs e)
+        {
+            var selected = e.CurrentSelection?.FirstOrDefault() as JudokaModel;
+            if (selected == null) return;
+
+            // navigeer naar detailpagina
+            var vm = new AthleteDetailViewModel(selected);
+            var page = new AthleteDetailPage(vm);
+            await Navigation.PushAsync(page);
+
+            // selectie wissen zodat opnieuw klikken kan
+            if (sender is CollectionView cv) cv.SelectedItem = null;
         }
     }
 }
