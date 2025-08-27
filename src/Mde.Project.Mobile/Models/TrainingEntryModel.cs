@@ -14,5 +14,7 @@ namespace Mde.Project.Mobile.Models
         public string? Comment { get; set; }
         public int Id { get; set; }
         public List<TrainingAttachmentModel> Attachments { get; set; } = new();
+
+        public List<OpponentNoteModel>? OpponentNotes { get; set; } = new();
     }
 }

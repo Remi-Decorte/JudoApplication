@@ -21,14 +21,16 @@ namespace Mde.Project.Mobile.ViewModels
     public class AgendaViewModel : INotifyPropertyChanged
     {
         private readonly ITrainingService _trainingService;
+        private readonly IJudokaService _judokaService;
         private const string LocalFileName = "trainings_local.json";
 
         private readonly ISpeechToText _speech = SpeechToText.Default;
         private CancellationTokenSource? _sttCts;
 
-        public AgendaViewModel(ITrainingService trainingService)
+        public AgendaViewModel(ITrainingService trainingService, IJudokaService judokaService)
         {
             _trainingService = trainingService;
+            _judokaService = judokaService;
 
             StartDictationCommand = new Command(async () => await StartDictationAsync(), () => !IsListening);
             StopDictationCommand = new Command(() => _sttCts?.Cancel(), () => IsListening);
@@ -273,7 +275,9 @@ namespace Mde.Project.Mobile.ViewModels
             }
 
             await Application.Current?.MainPage?.Navigation.PushAsync(
-                new Pages.AddTrainingPage(new AddTrainingViewModel(SelectedTraining))
+                new Pages.AddTrainingPage(
+                    new AddTrainingViewModel(_judokaService, SelectedTraining)   
+                )
             );
         }
 
