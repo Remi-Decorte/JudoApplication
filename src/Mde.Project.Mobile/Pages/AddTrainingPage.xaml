@@ -9,28 +9,32 @@
         <VerticalStackLayout Padding="20" Spacing="16" BackgroundColor="LightGray">
 
             <!-- Datum -->
-            <VerticalStackLayout BackgroundColor="White" Padding="12" Spacing="6" CornerRadius="12">
+            <VerticalStackLayout BackgroundColor="White" Padding="12" Spacing="6">
                 <Label Text="Datum" FontAttributes="Bold"/>
                 <DatePicker Date="{Binding Date}"/>
             </VerticalStackLayout>
 
             <!-- Type -->
-            <VerticalStackLayout BackgroundColor="White" Padding="12" Spacing="6" CornerRadius="12">
+            <VerticalStackLayout BackgroundColor="White" Padding="12" Spacing="6">
                 <Label Text="Type training" FontAttributes="Bold"/>
                 <Picker ItemsSource="{Binding TrainingTypes}" SelectedItem="{Binding SelectedType}"/>
             </VerticalStackLayout>
 
-            <!-- Technieken (kun je alleen kiezen bij randoris) -->
-            <VerticalStackLayout IsVisible="{Binding IsRandori}" BackgroundColor="White" Padding="12" Spacing="8" CornerRadius="12">
+            <!-- Technieken (alleen bij randori zichtbaar) -->
+            <VerticalStackLayout IsVisible="{Binding IsRandori}" BackgroundColor="White" Padding="12" Spacing="8">
                 <Label Text="Technieken & scores" FontAttributes="Bold"/>
                 <CollectionView ItemsSource="{Binding Techniques}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
                             <Grid ColumnDefinitions="*,Auto,Auto,Auto" Padding="4">
                                 <Label Text="{Binding Technique}" VerticalOptions="Center"/>
-                                <Button Grid.Column="1" Text="-" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DecrementCommand}" CommandParameter="{Binding .}" />
+                                <Button Grid.Column="1" Text="-"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DecrementCommand}"
+                                        CommandParameter="{Binding .}" />
                                 <Label Grid.Column="2" Text="{Binding ScoreCount}" VerticalOptions="Center" HorizontalTextAlignment="Center" />
-                                <Button Grid.Column="3" Text="+" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.IncrementCommand}" CommandParameter="{Binding .}" />
+                                <Button Grid.Column="3" Text="+"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.IncrementCommand}"
+                                        CommandParameter="{Binding .}" />
                             </Grid>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>

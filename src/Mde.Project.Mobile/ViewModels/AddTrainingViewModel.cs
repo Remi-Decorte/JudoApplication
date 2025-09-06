@@ -22,7 +22,6 @@ namespace Mde.Project.Mobile.ViewModels
             SelectedType = TrainingTypes[0];
 
             // randori default technieken dat ze moeten uit kiezen voorlopig
-            // kan nog uitbreiden dat ze zelf technieken kunnen schrijven
             Techniques = new ObservableCollection<TechniqueScoreModel>
             {
                 new TechniqueScoreModel { Technique = "Uchi Mata", ScoreCount = 0 },
@@ -31,8 +30,22 @@ namespace Mde.Project.Mobile.ViewModels
             };
 
             SaveCommand = new Command(async () => await SaveAsync(), () => !IsBusy);
-            IncrementCommand = new Command<TechniqueScoreModel>(t => { if (t != null) { t.ScoreCount++; OnPropertyChanged(nameof(Techniques)); }});
-            DecrementCommand = new Command<TechniqueScoreModel>(t => { if (t != null && t.ScoreCount > 0) { t.ScoreCount--; OnPropertyChanged(nameof(Techniques)); }});
+            IncrementCommand = new Command<TechniqueScoreModel>(t =>
+            {
+                if (t != null)
+                {
+                    t.ScoreCount++;
+                    OnPropertyChanged(nameof(Techniques));
+                }
+            });
+            DecrementCommand = new Command<TechniqueScoreModel>(t =>
+            {
+                if (t != null && t.ScoreCount > 0)
+                {
+                    t.ScoreCount--;
+                    OnPropertyChanged(nameof(Techniques));
+                }
+            });
         }
 
         public void SetJwt(string token) => _jwtToken = token;
@@ -59,7 +72,8 @@ namespace Mde.Project.Mobile.ViewModels
             }
         }
 
-        public bool IsRandori => SelectedType?.Equals("randori", StringComparison.OrdinalIgnoreCase) == true;
+        public bool IsRandori =>
+            SelectedType?.Equals("randori", StringComparison.OrdinalIgnoreCase) == true;
 
         public ObservableCollection<TechniqueScoreModel> Techniques { get; }
 
@@ -67,7 +81,12 @@ namespace Mde.Project.Mobile.ViewModels
         public bool IsBusy
         {
             get => _isBusy;
-            set { _isBusy = value; OnPropertyChanged(); (SaveCommand as Command)?.ChangeCanExecute(); }
+            set
+            {
+                _isBusy = value;
+                OnPropertyChanged();
+                (SaveCommand as Command)?.ChangeCanExecute();
+            }
         }
 
         public ICommand SaveCommand { get; }

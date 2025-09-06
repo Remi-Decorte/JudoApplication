@@ -12,5 +12,6 @@ namespace Mde.Project.Mobile.Models
         public string FullName { get; set; } = string.Empty;
         public string Country { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;
+        public int Ranking { get; set; }
     }
 }

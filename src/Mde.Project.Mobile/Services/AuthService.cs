@@ -1,39 +1,27 @@
 ﻿using System.Net.Http.Json;
+using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
 
-namespace Mde.Project.Mobile.Services;
-
-public class AuthService
+namespace Mde.Project.Mobile.Services
 {
-    private readonly HttpClient _httpClient;
-
-    public AuthService()
+    public class AuthService : BaseApiService, IAuthService
     {
-        _httpClient = new HttpClient
+        public async Task<JwtResponse?> LoginAsync(LoginModel login)
         {
-            BaseAddress = new Uri("https://localhost:62160/") 
-        };
-    }
-
-    public async Task<string?> LoginAsync(LoginModel login)
-    {
-        try
-        {
-            var response = await _httpClient.PostAsJsonAsync("auth/login", login);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<JwtResponse>();
-                return result?.Token;
-            }
-
-            return null;
+            return await ExecuteApiCallAsync<JwtResponse>(() =>
+                _httpClient.PostAsJsonAsync("auth/login", login));
         }
-        catch
+
+        public async Task<JwtResponse?> RegisterAsync(RegisterModel register)
         {
-            return null;
+            return await ExecuteApiCallAsync<JwtResponse>(() =>
+                _httpClient.PostAsJsonAsync("auth/register", register));
+        }
+
+        public async Task LogoutAsync()
+        {
+            SecureStorage.Remove(TokenKey);
+            _httpClient.DefaultRequestHeaders.Authorization = null;
         }
     }
 }
-
-

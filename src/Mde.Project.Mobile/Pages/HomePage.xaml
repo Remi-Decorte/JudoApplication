@@ -1,13 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:Mde.Project.Mobile.ViewModels"
              x:Class="Mde.Project.Mobile.Pages.HomePage"
              Title="Home">
-
-    <ContentPage.BindingContext>
-        <vm:HomePageViewModel />
-    </ContentPage.BindingContext>
 
     <ScrollView>
         <VerticalStackLayout Padding="0" Spacing="0" BackgroundColor="LightGray">
@@ -27,14 +22,9 @@
 
                     <!-- Navigatieknoppen -->
                     <HorizontalStackLayout Spacing="20" VerticalOptions="Center">
-                        <Button Text="Watch" BackgroundColor="Transparent" TextColor="Black"/>
-                        <Button Text="Events" BackgroundColor="Transparent" TextColor="Black"/>
-                        <Button Text="Athletes"
-                                BackgroundColor="Transparent"
-                                TextColor="Black"
-                                Clicked="NavigateToAthletes" />
-                        <Button Text="Rankings" BackgroundColor="Transparent" TextColor="Black"/>
-                        <Button Text="Learn" BackgroundColor="Transparent" TextColor="Black"/>
+                        <Button Text="Events" BackgroundColor="Transparent" TextColor="Black" Clicked="NavigateToEvents"/>
+                        <Button Text="Athletes" BackgroundColor="Transparent" TextColor="Black" Clicked="NavigateToAthletes"/>
+                        <Button Text="Agenda" BackgroundColor="Transparent" TextColor="Black" Clicked="NavigateToAgenda"/>
                     </HorizontalStackLayout>
                 </HorizontalStackLayout>
             </Grid>
@@ -92,3 +82,4 @@
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
+

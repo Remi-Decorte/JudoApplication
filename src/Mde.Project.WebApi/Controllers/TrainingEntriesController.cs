@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Mde.Project.WebApi.Data;
-using Mde.Project.WebApi.Entities;
-using Microsoft.EntityFrameworkCore;
+﻿using Mde.Project.WebApi.Data;
 using Mde.Project.WebApi.DTOs.Requests;
+using Mde.Project.WebApi.DTOs.Responses;
+using Mde.Project.WebApi.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Mde.Project.WebApi.Controllers;
 
@@ -23,7 +25,7 @@ public class TrainingEntriesController : ControllerBase
     [HttpGet("by-user")]
     public async Task<ActionResult<IEnumerable<TrainingEntry>>> GetForLoggedInUser()
     {
-        string? userId = User?.Identity?.Name;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userId))
             return Unauthorized("Gebruiker niet herkend.");
@@ -34,35 +36,67 @@ public class TrainingEntriesController : ControllerBase
             .OrderBy(e => e.Date)
             .ToListAsync();
 
-        return Ok(entries);
+        var response = entries.Select(entry => new TrainingEntryResponse
+        {
+            Id = entry.Id,
+            Date = entry.Date,
+            Type = entry.Type,
+            Comment = entry.Comment,
+            TechniqueScores = entry.TechniqueScores.Select(ts => new TechniqueScoreResponse
+            {
+                Id = ts.Id,
+                Technique = ts.Technique,
+                ScoreCount = ts.ScoreCount
+            }).ToList()
+        }).ToList();
+
+        return Ok(response);
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateTrainingEntry([FromBody] CreateTrainingEntryRequest request)
     {
-        string? userId = User?.Identity?.Name;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
+
+        var techniqueScores = request.Type.ToLower() == "randori"
+                ? request.TechniqueScores.Select(s => new TechniqueScore
+                {
+                    Technique = s.Technique,
+                    ScoreCount = s.ScoreCount
+                }).ToList()
+                : new List<TechniqueScore>();
 
         var entry = new TrainingEntry
         {
             UserId = userId,
             Date = request.Date,
             Type = request.Type,
-            TechniqueScores = request.Type.ToLower() == "randori"
-                ? request.TechniqueScores.Select(s => new TechniqueScore
-                {
-                    Technique = s.Technique,
-                    ScoreCount = s.ScoreCount
-                }).ToList()
-                : new List<TechniqueScore>()
+            Comment = request.Comment ?? string.Empty,
+            TechniqueScores = techniqueScores
         };
 
         _dbContext.TrainingEntries.Add(entry);
         await _dbContext.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetForLoggedInUser), new { id = entry.Id }, entry);
+        // Mapping naar response DTO
+        var response = new TrainingEntryResponse
+        {
+            Id = entry.Id,
+            Date = entry.Date,
+            Type = entry.Type,
+            Comment = entry.Comment,
+            TechniqueScores = entry.TechniqueScores.Select(ts => new TechniqueScoreResponse
+            {
+                Id = ts.Id,
+                Technique = ts.Technique,
+                ScoreCount = ts.ScoreCount
+            }).ToList()
+        };
+
+        return CreatedAtAction(nameof(GetForLoggedInUser), new { id = entry.Id }, response);
     }
 }
 

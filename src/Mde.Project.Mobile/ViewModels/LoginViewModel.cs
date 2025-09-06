@@ -1,22 +1,34 @@
-﻿using Mde.Project.Mobile.Models;
-using Mde.Project.Mobile.Services;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
+using Mde.Project.Mobile.Interfaces;
+using Mde.Project.Mobile.Models;
 
 namespace Mde.Project.Mobile.ViewModels
 {
     public class LoginViewModel : INotifyPropertyChanged
     {
-        private readonly AuthService _authService = new();
+        private readonly IAuthService _authService;
 
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        public LoginViewModel(IAuthService authService)
+        {
+            _authService = authService;
+            LoginCommand = new Command(async () => await LoginAsync(), () => !IsBusy);
+        }
+
+        private string _email = string.Empty;
+        public string Email
+        {
+            get => _email;
+            set { _email = value; OnPropertyChanged(); }
+        }
+
+        private string _password = string.Empty;
+        public string Password
+        {
+            get => _password;
+            set { _password = value; OnPropertyChanged(); }
+        }
 
         private bool _isBusy;
         public bool IsBusy
@@ -26,6 +38,7 @@ namespace Mde.Project.Mobile.ViewModels
             {
                 _isBusy = value;
                 OnPropertyChanged();
+                (LoginCommand as Command)?.ChangeCanExecute();
             }
         }
 
@@ -33,51 +46,51 @@ namespace Mde.Project.Mobile.ViewModels
         public string ErrorMessage
         {
             get => _errorMessage;
-            set
-            {
-                _errorMessage = value;
-                OnPropertyChanged();
-            }
+            set { _errorMessage = value; OnPropertyChanged(); }
         }
 
         public ICommand LoginCommand { get; }
 
-        public LoginViewModel()
-        {
-            LoginCommand = new Command(async () => await LoginAsync(), () => !IsBusy);
-        }
-
         private async Task LoginAsync()
         {
             if (IsBusy) return;
-
             IsBusy = true;
             ErrorMessage = string.Empty;
 
-            var loginModel = new LoginModel
+            try
             {
-                Email = Email,
-                Password = Password
-            };
+                var loginModel = new LoginModel
+                {
+                    Email = Email,
+                    Password = Password
+                };
 
-            var token = await _authService.LoginAsync(loginModel);
+                var jwtResponse = await _authService.LoginAsync(loginModel);
 
-            if (!string.IsNullOrEmpty(token))
-            {
-                // Bewaar token en navigeer
-                Preferences.Set("jwt", token);
-                await Shell.Current.GoToAsync("//home"); // ← we maken dit straks goed met route
+                if (jwtResponse != null && !string.IsNullOrWhiteSpace(jwtResponse.Token))
+                {
+                    // Store the JWT token securely
+                    await SecureStorage.SetAsync("jwt_token", jwtResponse.Token);
+                    // Navigate to the home page
+                    await Shell.Current.GoToAsync("//home");
+                }
+                else
+                {
+                    ErrorMessage = "Inloggen mislukt. Controleer je e-mailadres en wachtwoord.";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                ErrorMessage = "Login mislukt. Controleer je gegevens.";
+                ErrorMessage = $"Fout bij inloggen: {ex.Message}";
             }
-
-            IsBusy = false;
+            finally
+            {
+                IsBusy = false;
+            }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string name = null) =>
+        public event PropertyChangedEventHandler? PropertyChanged;
+        private void OnPropertyChanged([CallerMemberName] string? name = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

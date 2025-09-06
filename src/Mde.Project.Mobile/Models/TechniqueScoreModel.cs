@@ -1,14 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace Mde.Project.Mobile.Models
 {
-    public class TechniqueScoreModel
+    public class TechniqueScoreModel : INotifyPropertyChanged
     {
-        public string Technique { get; set; } = string.Empty;
-        public int ScoreCount { get; set; }
+        private string _technique = string.Empty;
+        public string Technique
+        {
+            get => _technique;
+            set { _technique = value; OnPropertyChanged(); }
+        }
+
+        private int _scoreCount;
+        public int ScoreCount
+        {
+            get => _scoreCount;
+            set
+            {
+                if (_scoreCount == value) return;
+                _scoreCount = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        private void OnPropertyChanged([CallerMemberName] string? name = null) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }
