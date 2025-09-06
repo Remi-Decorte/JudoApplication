@@ -339,3 +339,4 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 /src/Mde.Project.Mobile/Services/StatisticsService.cs
+/src/Mde.Project.Mobile/DTOs/Requests/TechniqueScoreDto.cs
