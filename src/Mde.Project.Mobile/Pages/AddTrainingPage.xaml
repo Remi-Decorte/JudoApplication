@@ -5,42 +5,33 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     Title="Training toevoegen">
 
-    <Grid Padding="20" BackgroundColor="LightGray"
-          RowDefinitions="Auto,Auto,*,Auto,Auto,Auto"
-          RowSpacing="16">
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="16" BackgroundColor="LightGray">
 
-        <!-- Datum -->
-        <Frame Grid.Row="0" Padding="12" BackgroundColor="White" HasShadow="False">
-            <VerticalStackLayout Spacing="6">
+            <!-- Datum -->
+            <VerticalStackLayout BackgroundColor="White" Padding="12" Spacing="6">
                 <Label Text="Datum" FontAttributes="Bold"/>
-                <DatePicker Date="{Binding Date}" />
+                <DatePicker Date="{Binding Date}"/>
             </VerticalStackLayout>
-        </Frame>
 
-        <!-- Type -->
-        <Frame Grid.Row="1" Padding="12" BackgroundColor="White" HasShadow="False">
-            <VerticalStackLayout Spacing="6">
+            <!-- Type -->
+            <VerticalStackLayout BackgroundColor="White" Padding="12" Spacing="6">
                 <Label Text="Type training" FontAttributes="Bold"/>
-                <Picker ItemsSource="{Binding TrainingTypes}"
-                        SelectedItem="{Binding SelectedType}" />
+                <Picker ItemsSource="{Binding TrainingTypes}" SelectedItem="{Binding SelectedType}"/>
             </VerticalStackLayout>
-        </Frame>
 
-        <!-- Technieken (alleen bij randori) -->
-        <Frame Grid.Row="2" Padding="12" BackgroundColor="White" HasShadow="False"
-               IsVisible="{Binding IsRandori}">
-            <VerticalStackLayout Spacing="8">
-                <Label Text="Technieken en scores" FontAttributes="Bold" />
+            <!-- Technieken (alleen bij randori zichtbaar) -->
+            <VerticalStackLayout IsVisible="{Binding IsRandori}" BackgroundColor="White" Padding="12" Spacing="8">
+                <Label Text="Technieken & scores" FontAttributes="Bold"/>
                 <CollectionView ItemsSource="{Binding Techniques}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Grid ColumnDefinitions="*,Auto,50,Auto" Padding="4" ColumnSpacing="8">
-                                <Label Text="{Binding Technique}" VerticalOptions="Center" />
-                                <Button Grid.Column="1" Text="-" 
+                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" Padding="4">
+                                <Label Text="{Binding Technique}" VerticalOptions="Center"/>
+                                <Button Grid.Column="1" Text="-"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DecrementCommand}"
                                         CommandParameter="{Binding .}" />
-                                <Label Grid.Column="2" Text="{Binding ScoreCount}" 
-                                       VerticalOptions="Center" HorizontalTextAlignment="Center" />
+                                <Label Grid.Column="2" Text="{Binding ScoreCount}" VerticalOptions="Center" HorizontalTextAlignment="Center" />
                                 <Button Grid.Column="3" Text="+"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.IncrementCommand}"
                                         CommandParameter="{Binding .}" />
@@ -49,65 +40,16 @@
                     </CollectionView.ItemTemplate>
                 </CollectionView>
             </VerticalStackLayout>
-        </Frame>
 
-        <!-- Randori: per-judoka opmerking -->
-        <Frame Grid.Row="3" Padding="12" BackgroundColor="White" HasShadow="False"
-               IsVisible="{Binding IsRandori}">
-            <VerticalStackLayout Spacing="10">
-                <Label Text="Tegenstander en opmerking" FontAttributes="Bold" />
+            <!-- Opslaan -->
+            <Button Text="Opslaan"
+                    Command="{Binding SaveCommand}"
+                    BackgroundColor="#FBBF24"
+                    TextColor="Black"
+                    FontAttributes="Bold"/>
 
-                <Picker Title="Kies categorie"
-                        ItemsSource="{Binding Categories}"
-                        SelectedItem="{Binding SelectedCategory}" />
-                
-                <!-- kies judoka -->
-                <Picker Title="Kies een judoka"
-                        ItemsSource="{Binding Judokas}"
-                        ItemDisplayBinding="{Binding FullName}"
-                        SelectedItem="{Binding SelectedJudoka}" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
 
-                <!-- opmerking -->
-                <Editor Placeholder="Schrijf je opmerking over dit gevecht..."
-                        AutoSize="TextChanges"
-                        Text="{Binding OpponentComment}" />
-
-                <Button Text="Voeg opmerking toe"
-                        Command="{Binding AddOpponentCommand}"
-                        BackgroundColor="#10B981"
-                        TextColor="White"
-                        FontAttributes="Bold" />
-
-                <!-- lijst van toegevoegde notes -->
-                <CollectionView ItemsSource="{Binding OpponentNotes}">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" Padding="8">
-                                <Label Grid.Row="0" Grid.Column="0"
-                                       Text="{Binding Name}" FontAttributes="Bold" />
-                                <Button Grid.Row="0" Grid.Column="1" Text="Verwijder"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.RemoveOpponentCommand}"
-                                        CommandParameter="{Binding .}" />
-                                <Label Grid.Row="1" Grid.ColumnSpan="2"
-                                       Text="{Binding Comment}"
-                                       FontSize="12" TextColor="DimGray" />
-                            </Grid>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-            </VerticalStackLayout>
-        </Frame>
-
-        <!-- Opslaan -->
-        <Button Grid.Row="4" Text="Opslaan"
-                Command="{Binding SaveCommand}"
-                BackgroundColor="#FBBF24"
-                TextColor="Black"
-                FontAttributes="Bold" />
-
-        <!-- Busy -->
-        <ActivityIndicator Grid.Row="5"
-                           IsRunning="{Binding IsBusy}"
-                           IsVisible="{Binding IsBusy}" />
-    </Grid>
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

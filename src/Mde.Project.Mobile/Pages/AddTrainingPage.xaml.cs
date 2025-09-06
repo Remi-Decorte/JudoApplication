@@ -1,4 +1,5 @@
 using Mde.Project.Mobile.ViewModels;
+using Microsoft.Maui.Storage;
 
 namespace Mde.Project.Mobile.Pages
 {
@@ -11,6 +12,20 @@ namespace Mde.Project.Mobile.Pages
             InitializeComponent();
             _vm = vm;
             BindingContext = _vm;
+        }
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            try
+            {
+                var jwt = await SecureStorage.GetAsync("jwt_token") ?? string.Empty;
+                _vm.SetJwt(jwt);
+            }
+            catch
+            {
+                // SecureStorage kan onbeschikbaar zijn; stil negeren
+            }
         }
     }
 }
