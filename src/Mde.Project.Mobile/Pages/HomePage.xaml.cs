@@ -15,7 +15,7 @@ namespace Mde.Project.Mobile.Pages
             _vm = vm;
             _athletesPage = athletesPage;
             _agendaPage = agendaPage;
-            _eventsPage = eventsPage; 
+            _eventsPage = eventsPage;
             BindingContext = _vm;
         }
 
@@ -35,8 +35,8 @@ namespace Mde.Project.Mobile.Pages
             await Navigation.PushAsync(_agendaPage);
         }
         private async void NavigateToEvents(object sender, EventArgs e)
-        { 
-            await Navigation.PushAsync(_eventsPage); 
+        {
+            await Navigation.PushAsync(_eventsPage);
         }
     }
 }

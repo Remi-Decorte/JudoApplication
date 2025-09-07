@@ -276,7 +276,7 @@ namespace Mde.Project.Mobile.ViewModels
 
             await Application.Current?.MainPage?.Navigation.PushAsync(
                 new Pages.AddTrainingPage(
-                    new AddTrainingViewModel(_judokaService, SelectedTraining)   
+                    new AddTrainingViewModel(_judokaService, SelectedTraining)
                 )
             );
         }

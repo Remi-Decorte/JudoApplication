@@ -22,7 +22,7 @@
 
             <!-- Technieken (alleen bij randori zichtbaar) -->
             <VerticalStackLayout IsVisible="{Binding IsRandori}" BackgroundColor="White" Padding="12" Spacing="8">
-                <Label Text="Technieken & scores" FontAttributes="Bold"/>
+                <Label Text="Technieken and scores" FontAttributes="Bold"/>
                 <CollectionView ItemsSource="{Binding Techniques}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>

@@ -35,4 +35,3 @@ namespace Mde.Project.Mobile.Pages
         }
     }
 }
-

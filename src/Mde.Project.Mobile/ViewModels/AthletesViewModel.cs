@@ -40,10 +40,10 @@ namespace Mde.Project.Mobile.ViewModels
             set { _isBusy = value; OnPropertyChanged(); }
         }
 
-        // ?? Eén publieke entrypoint voor de pagina
+        // ?? E?n publieke entrypoint voor de pagina
         public async Task LoadAsync()
         {
-            // Eerst categorieën (zet SelectedCategory) en daarna lijst
+            // Eerst categorie?n (zet SelectedCategory) en daarna lijst
             await LoadCategoriesAsync();
             await LoadJudokasAsync();
         }
