@@ -1,30 +1,23 @@
-﻿using System.Net.Http.Json;
+﻿using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
 
 namespace Mde.Project.Mobile.Services;
 
-public class JudokaService
+public class JudokasService : BaseApiService, IJudokaService
 {
-    private readonly HttpClient _httpClient;
+    public JudokasService() : base() { }
 
-    public JudokaService()
+    public async Task<List<string>> GetCategoriesAsync()
     {
-        _httpClient = new HttpClient
-        {
-            BaseAddress = new Uri("https://localhost:62160/") 
-        };
+        // This would need to be implemented in your API
+        // For now, return common judo categories
+        await Task.CompletedTask;
+        return new List<string> { "-60", "-66", "-73", "-81", "-90", "-100", "+100" };
     }
 
-    public async Task<List<JudokaModel>> GetJudokasByCategoryAsync(string category)
+    public async Task<List<JudokaModel>?> GetJudokasByCategoryAsync(string category)
     {
-        try
-        {
-            var response = await _httpClient.GetFromJsonAsync<List<JudokaModel>>($"api/judokas/by-category/{category}");
-            return response ?? new List<JudokaModel>();
-        }
-        catch
-        {
-            return new List<JudokaModel>(); 
-        }
+        return await ExecuteApiCallAsync<List<JudokaModel>>(() =>
+            _httpClient.GetAsync($"judokas/by-category/{category}"));
     }
 }

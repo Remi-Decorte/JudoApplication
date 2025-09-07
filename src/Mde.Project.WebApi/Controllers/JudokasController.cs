@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Mde.Project.WebApi.Data;
 using Mde.Project.WebApi.Entities;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Mde.Project.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class JudokasController : ControllerBase
 {
     private readonly ApplicationDbContext _dbContext;

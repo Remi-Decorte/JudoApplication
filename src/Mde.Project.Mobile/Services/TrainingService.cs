@@ -1,53 +1,22 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
+using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
-using System.Text;
-using System.Text.Json;
 
-namespace Mde.Project.Mobile.Services;
 
-public class TrainingService
+namespace Mde.Project.Mobile.Services
 {
-    private readonly HttpClient _httpClient;
-
-    public TrainingService()
+    public class TrainingService : BaseApiService, ITrainingService
     {
-        _httpClient = new HttpClient
+        public async Task<List<TrainingEntryModel>?> GetUserTrainingEntriesAsync()
         {
-            BaseAddress = new Uri("https://localhost:62160/") // Pas aan indien nodig
-        };
-    }
-
-    public async Task<List<TrainingEntryModel>> GetTrainingsAsync(string jwtToken)
-    {
-        try
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
-
-            var result = await _httpClient.GetFromJsonAsync<List<TrainingEntryModel>>("api/trainingentries/by-user");
-
-            return result ?? new List<TrainingEntryModel>();
+            return await ExecuteApiCallAsync<List<TrainingEntryModel>>(() =>
+                _httpClient.GetAsync("trainingentries/by-user"));
         }
-        catch
+
+        public async Task<TrainingEntryModel?> CreateTrainingEntryAsync(TrainingEntryModel request)
         {
-            return new List<TrainingEntryModel>();
-        }
-    }
-
-    public async Task<bool> CreateTrainingAsync(TrainingEntryModel model, string jwtToken)
-    {
-        try
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
-
-            var content = new StringContent(JsonSerializer.Serialize(model), Encoding.UTF8, "application/json");
-
-            var response = await _httpClient.PostAsync("api/trainingentries", content);
-
-            return response.IsSuccessStatusCode;
-        }
-        catch
-        {
-            return false;
+            return await ExecuteApiCallAsync<TrainingEntryModel>(() =>
+                _httpClient.PostAsJsonAsync("trainingentries", request));
         }
     }
 }

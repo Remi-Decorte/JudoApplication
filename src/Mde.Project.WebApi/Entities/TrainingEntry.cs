@@ -6,7 +6,8 @@
 
         public string UserId { get; set; } = string.Empty; 
         public DateTime Date { get; set; }
-        public string Type { get; set; } = string.Empty; 
+        public string Type { get; set; } = string.Empty;
+        public string Comment { get; set; } = string.Empty;
 
         public ICollection<TechniqueScore> TechniqueScores { get; set; } = new List<TechniqueScore>();
     }
