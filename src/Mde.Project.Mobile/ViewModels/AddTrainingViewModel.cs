@@ -309,4 +309,5 @@ namespace Mde.Project.Mobile.ViewModels
         private void OnPropertyChanged([CallerMemberName] string? name = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
+}
 //fix
