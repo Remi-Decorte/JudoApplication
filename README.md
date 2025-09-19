@@ -95,7 +95,7 @@ dotnet ef database update
 - POST /auth/login ® login met JWT
 - GET /auth/google ® login via Google OAuth2
 ---
-##  Contributio & local setup
+##  Contribution & local setup
 To be able to contribute and set it up locally, follow these steps:
 
 ### 1. IDE & Tools
