@@ -91,8 +91,8 @@ dotnet ef database update
 - POST /auth/login ® login met JWT
 - GET /auth/google ® login via Google OAuth2
 ---
-##  Contribution & local setup
-To be able to contribute to this project and set it up locally, follow these steps:
+##  Contributio & local setup
+To be able to contribute and set it up locally, follow these steps:
 
 ### 1. IDE & Tools
 There are lots of IDE's available, but for this project we will chose **Visual Studio 2022**. 
@@ -102,8 +102,11 @@ The necessary workloads are:
 - ASP.NET and web development
 - .NET Multi-platform App UI development
 
-### 2. Cloning the repository
-After you have successfully installed Visual Studio Community 2022, you click *Clone repository...*
+### 2. Contribution
+After you have successfully installed Visual Studio Community 2022, you click *Fork* on the [github page](https://github.com/Remi-Decorte/JudoApplication).
+For more information on how to contribute to a github project read [Contributing to open source](https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-open-source).
+Now that you have forked the repository you clone the project via the IDE.
+Click *Clone repository...* in the IDE.
 Fill in `https://github.com/Remi-Decorte/JudoApplication.git` as *Repository location*.
 You can leave your own destination *Path* default.
 Click *Clone*.
