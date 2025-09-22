@@ -3,42 +3,84 @@
     x:Class="Mde.Project.Mobile.Pages.AgendaPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:syncfusion="http://schemas.syncfusion.com/maui"
+    xmlns:scheduler="http://schemas.syncfusion.com/maui"
     Title="Mijn Agenda"
     BackgroundColor="#F8F9FA">
 
     <Grid RowDefinitions="Auto,Auto,*" Padding="0">
 
+        <!-- Header -->
         <Frame Grid.Row="0" Padding="20,16" CornerRadius="0" HasShadow="False" BackgroundColor="#0078D4">
             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
-                <Label Text="Mijn Agenda" FontSize="28" FontAttributes="Bold" TextColor="White" VerticalOptions="Center" />
-                <Button Grid.Column="1" Text="Vandaag" Command="{Binding GoToTodayCommand}"
-                        BackgroundColor="White" TextColor="#0078D4" CornerRadius="20" Padding="16,8" FontAttributes="Bold" />
-                <Button Grid.Column="2" Text="+ Nieuw" Command="{Binding NewEntryCommand}"
-                        BackgroundColor="White" TextColor="#0078D4" CornerRadius="20" Padding="16,8" FontAttributes="Bold" />
+                <Label Text="Mijn Agenda"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       TextColor="White"
+                       VerticalOptions="Center" />
+                <Button Grid.Column="1"
+                        Text="Vandaag"
+                        Command="{Binding GoToTodayCommand}"
+                        BackgroundColor="White"
+                        TextColor="#0078D4"
+                        CornerRadius="20"
+                        Padding="16,8"
+                        FontAttributes="Bold" />
+                <Button Grid.Column="2"
+                        Text="+ Nieuw"
+                        Command="{Binding NewEntryCommand}"
+                        BackgroundColor="White"
+                        TextColor="#0078D4"
+                        CornerRadius="20"
+                        Padding="16,8"
+                        FontAttributes="Bold" />
             </Grid>
         </Frame>
 
-        <Frame Grid.Row="1" Padding="16,10" CornerRadius="0" HasShadow="False" BackgroundColor="White" Margin="0,0,0,1">
-            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                <Button Grid.Column="0" Text="Vorige" Command="{Binding PreviousMonthCommand}"
-                        BackgroundColor="Transparent" TextColor="#0078D4" />
-                <Label Grid.Column="1" Text="{Binding CurrentMonthTitle}" FontSize="16" FontAttributes="Bold"
-                       VerticalOptions="Center" HorizontalOptions="Center" />
-                <Button Grid.Column="2" Text="Volgende" Command="{Binding NextMonthCommand}"
-                        BackgroundColor="Transparent" TextColor="#0078D4" />
+        <!-- Navigatie + View dropdown -->
+        <Frame Grid.Row="1" Padding="12" CornerRadius="0" HasShadow="False" BackgroundColor="White" Margin="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                <Button Grid.Column="0"
+                        Text="Vorige"
+                        Command="{Binding PreviousPeriodCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="#0078D4"
+                        Padding="8,4" />
+
+                <!-- Dropdown om Week/Maand te kiezen -->
+                <Picker Grid.Column="1"
+                        Title="Weergave"
+                        ItemsSource="{Binding ViewModes}"
+                        SelectedItem="{Binding SelectedViewMode}"
+                        WidthRequest="130"
+                        FontSize="14"
+                        HorizontalOptions="Start" />
+
+                <!-- Titel van huidige periode (weekrange of maand) -->
+                <Label Grid.Column="2"
+                       Text="{Binding CurrentPeriodTitle}"
+                       FontAttributes="Bold"
+                       FontSize="16"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       LineBreakMode="TailTruncation" />
+
+                <Button Grid.Column="3"
+                        Text="Volgende"
+                        Command="{Binding NextPeriodCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="#0078D4"
+                        Padding="8,4" />
             </Grid>
         </Frame>
 
+        <!-- Scheduler -->
         <Grid Grid.Row="2" Padding="12">
-            <syncfusion:SfCalendar
-                x:Name="Calendar"
-                View="Month"
-                SelectionMode="Single"
-                ShowTrailingAndLeadingDates="True"
-                DisplayDate="{Binding DisplayMonth, Mode=TwoWay}"
+            <scheduler:SfScheduler
+                x:Name="Scheduler"
+                View="{Binding SchedulerView}"
+                FirstDayOfWeek="Monday"
+                DisplayDate="{Binding DisplayDate, Mode=TwoWay}"
                 SelectedDate="{Binding SelectedDate, Mode=TwoWay}" />
         </Grid>
-
     </Grid>
 </ContentPage>
