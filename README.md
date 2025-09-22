@@ -1,14 +1,17 @@
 # JudoTV – Mobile & WebAPI Project
-## n Projectbeschrijving
+## Projectbeschrijving
 JudoTV is een cross-platform project met een *.NET MAUI mobiele app* en een *ASP.NET Core WebAPI backend*.
-Het doel is om een alles-in-één oplossing te bieden voor judoka’s, trainers en clubs: agenda, events, De applicatie combineert *persoonlijk trainingsbeheer* met *wereldwijde wedstrijdinformatie*, zodat ---
+Het doel is om een alles-in-één oplossing te bieden voor judoka’s, trainers en clubs: agenda, evenementen ...
+De applicatie combineert *persoonlijk trainingsbeheer* met *wereldwijde wedstrijdinformatie*.
+
 ## Belangrijkste functies
-- n *Agenda* – plan je trainingen, noteer technieken en voeg foto’s of opmerkingen toe.
-- n *Events* – zie aankomende toernooien en evenementen wereldwijd.
-- n *Athletes* – ontdek judoka’s per gewichtscategorie en bekijk hun details.
-- n *Randori analyse* – voeg per tegenstander persoonlijke notities toe.
-- n *Login* – via JWT en Google OAuth2.
+- *Agenda* – plan je trainingen, noteer technieken en voeg foto’s of opmerkingen toe.
+- *Evenementen* – zie aankomende toernooien en evenementen wereldwijd.
+- *Athleten* – ontdek judoka’s per gewichtscategorie en bekijk hun details.
+- *Randori analyse* – voeg per tegenstander persoonlijke notities toe.
+- *Login* – via JWT en Google OAuth2.
 ---
+
 ##  Authenticatie & Login
 De app gebruikt een combinatie van *JWT-authenticatie* en *Google Login*.
 - *JWT: gebruiker logt in met email/wachtwoord ® backend geeft JWT-token ® opgeslagen in secure - **Google OAuth2*: OAuth2-flow via de backend (/auth/google). Gebruiker logt in met Google ® backend ### Belangrijke routes
@@ -16,53 +19,55 @@ De app gebruikt een combinatie van *JWT-authenticatie* en *Google Login*.
 - GET /auth/google ® Google OAuth login
 - GET /auth/me ® profiel van ingelogde gebruiker
 ---
+
 ##  Online Strategie
 De online strategie is opgebouwd rond *mobile-first*:
-- De *.NET MAUI app* is de primaire toegang tot de data (agenda, events, judoka’s).
+- De *.NET MAUI app* is de primaire toegang tot de data (agenda, evenementen, judoka’s).
 - De *ASP.NET Core WebAPI* is generiek en kan later ook gebruikt worden door een webportaal of andere - Alle communicatie verloopt via *REST API’s* en is beveiligd met JWT.
 - De backend is klaar voor *cloud hosting* (Azure, AWS, …).
 ---
+
 ## Structuur van het project
 ###  Mobile App
-*Pages/*
+*Pages*
 - HomePage.xaml – startpagina met navigatie naar Events, Athletes en Agenda
 - EventsPage.xaml – overzicht van aankomende events
 - AthletesPage.xaml – lijst met judoka’s per categorie
 - AthleteDetailPage.xaml – detailpagina per judoka met opmerkingen
 - AgendaPage.xaml – persoonlijke agenda met trainingen
 - AddTrainingPage.xaml – training toevoegen of bewerken
-*ViewModels/*
+*ViewModels*
 - HomePageViewModel.cs
 - EventsViewModel.cs
 - AthletesViewModel.cs
 - AthleteDetailViewModel.cs
 - AgendaViewModel.cs
 - AddTrainingViewModel.cs
-*Models/*
+*Models*
 - EventModel.cs
 - JudokaModel.cs
 - TrainingEntryModel.cs
 - TechniqueScoreModel.cs
 - OpponentNoteModel.cs
-*Services/*
+*Services*
 - EventService.cs
 - JudokasService.cs
 - TrainingService.cs
-*Interfaces/*
+*Interfaces*
 - IEventService.cs
 - IJudokaService.cs
 - ITrainingService.cs
 ---
 ###  WebAPI
-*Controllers/*
+*Controllers*
 - EventsController.cs – aankomende events (/api/events/upcoming)
 - JudokasController.cs – judoka’s per categorie (/api/judokas/by-category/{category})
 - AuthController.cs – login via JWT en Google
-*Entities/*
+*Entities*
 - Judoka.cs
 - Event.cs
 - TrainingEntry.cs
-*Data/*
+*Data*
 - ApplicationDbContext.cs – configuratie van database en DbSets
 ---
 ##  Databaseconfiguratie
@@ -90,24 +95,43 @@ dotnet ef database update
 - POST /auth/login ® login met JWT
 - GET /auth/google ® login via Google OAuth2
 ---
-##  Setup & Installatie
-1. *Clone repository*
-bash
-git clone https://github.com/username/judotv.git
-cd judotv
+##  Contribution & local setup
+To be able to contribute and set it up locally, follow these steps:
 
-2. *Backend (WebAPI) installeren*
-bash
-cd Mde.Project.WebApi
-dotnet restore
-dotnet run
+### 1. IDE & Tools
+There are lots of IDE's available, but for this project we will chose **Visual Studio 2022**. 
+Download the official [Visual Studio Community 2022](https://visualstudio.microsoft.com/vs/).
+During the installation process you will be asked to install workloads. 
+The necessary workloads are:
+- ASP.NET and web development
+- .NET Multi-platform App UI development
 
-3. *Mobile App (MAUI) installeren*
-bash
-cd Mde.Project.Mobile
-dotnet restore
-dotnet build
-dotnet maui run
+### 2. Contribution
+After you have successfully installed Visual Studio Community 2022, you click *Fork* on the [github page](https://github.com/Remi-Decorte/JudoApplication).
+For more information on how to contribute to a github project read [Contributing to open source](https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-open-source).
+Now that you have forked the repository you clone the project via the IDE.
+Click *Clone repository...* in the IDE.
+Fill in `https://github.com/Remi-Decorte/JudoApplication.git` as *Repository location*.
+You can leave your own destination *Path* default.
+Click *Clone*.
+
+### 3. Testrun
+After you have succuessfully cloned the repository you can now run the application.
+To run the mobile application we will need to create a **emulated android device**.
+1. Select the small downwards arrow next to *Start*
+2. Hover over *Android emulators* and select *Create android emulator*.
+
+To run our mobile app we need to simoultaneously run **Mde.Project.WebAPI**-project as well as **Mde.Project.Mobile**-project.
+1. Select the small downwards arrow next to *Start*
+2. Select *Configure startup projects...*
+3. Select *Multiple startup projects*
+4. Under *Launch profiles* select the left most icon *Create new launch profile*
+5. A new window at the left of the list with launch profiles will be created. 
+Under the Column *Action*, drop down the menu and select *Start* for both **Mde.Project.Mobile** and **Mde.Project.WebAPI**.
+6. Select *Save* and then *Ok*.
+7. In your workbench you can now select your newly created launch profile if you drop down the menu next to the *gear* icon.
+
+Congratulations you can now run the mobile application on a emulated android device via your computer.
 
 ---
 ##  Gebruikte technologieën
@@ -161,4 +185,4 @@ json
 - [Google OAuth2](https://developers.google.com/identity/protocols/oauth2)
 - [CommunityToolkit.MVVM](https://learn.microsoft.com/en-us/dotnet/communitytoolkit/mvvm/)
 - [ASP.NET Core WebAPI](https://learn.microsoft.com/en-us/aspnet/core/web-api)
-- [Entity Framework Core](https://learn.microsoft.com/en-us/ef/
+- [Entity Framework Core](https://learn.microsoft.com/en-us/ef/)
