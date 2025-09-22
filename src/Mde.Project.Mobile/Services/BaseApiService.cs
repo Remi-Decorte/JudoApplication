@@ -14,7 +14,7 @@ namespace Mde.Project.Mobile.Services
         {
             _httpClient = new HttpClient
             {
-                BaseAddress = new Uri("https://fb96g0tc-62160.uks1.devtunnels.ms/api/")
+                BaseAddress = new Uri("https://65n69d92-62160.euw.devtunnels.ms/api/")
             };
         }
 
