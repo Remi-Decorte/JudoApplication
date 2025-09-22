@@ -165,6 +165,19 @@ json
 }
 }
 
+## Dev tunnels 
+Dev Tunnel wordt gebruikt om je lokale backend tijdelijk via een publiek toegankelijke URL bereikbaar te maken, zodat je mobiele app of externe tools ermee kunnen verbinden. Zo kan je ontwikkelen en testen alsof de API online staat, zonder dat je die eerst moet deployen.
+
+Instellen van een Dev Tunnel
+
+1) Klik in Visual Studio op het Start-knopje (groene driehoek). Naast de tekst Start staat een pijltje naar beneden. Klik dit pijltje open om de beschikbare opties uit te klappen.
+
+2) Kies Dev Tunnel → Create Tunnel, geef de tunnel een naam, stel het type in op Persistent en zet de toegang op Public.
+
+3) Start je project. Visual Studio genereert een publieke URL voor je tunnel.
+
+4) Kopieer deze URL en plak ze in je BaseApiService (vervang daar de waarde van BaseAddress door deze nieuwe URL).
+
 ---
 ## Wireframes (conceptueel)
 - *HomePage*: navigatiebalk + events-overzicht
