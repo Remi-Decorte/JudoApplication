@@ -60,10 +60,8 @@ namespace Mde.Project.Mobile.ViewModels
 
             try
             {
-                // simpele lokale password-check die lijkt op Identity defaults
                 bool Strong(string p) =>
                     p?.Length >= 6 && p.Any(char.IsUpper) && p.Any(char.IsLower) && p.Any(char.IsDigit);
-
                 if (!Strong(Password))
                 {
                     ErrorMessage = "Kies een sterker wachtwoord (min. 6 tekens, hoofdletter, kleine letter en cijfer).";
@@ -75,15 +73,22 @@ namespace Mde.Project.Mobile.ViewModels
                     Username = Username?.Trim() ?? "",
                     Email = Email?.Trim() ?? "",
                     Password = Password,
-                    // tijdelijk vullen om [Required] te respecteren
                     FirstName = Username?.Trim() ?? "User",
-                    LastName = "-"                            // of vraag deze 2 velden in de UI
+                    LastName = "-"
                 };
 
                 var jwt = await _authService.RegisterAsync(registerModel);
                 if (jwt != null && !string.IsNullOrWhiteSpace(jwt.Token))
                 {
-                    await SecureStorage.SetAsync("jwt_token", jwt.Token);
+                    // GEEN token opslaan als je naar login wilt
+                    // await SecureStorage.SetAsync("jwt_token", jwt.Token);
+
+                    await Application.Current.MainPage.DisplayAlert(
+                        "Account aangemaakt", "Log nu in met je nieuwe account.", "OK");
+
+                    // leeg velden (optioneel)
+                    Username = Email = Password = string.Empty;
+
                     await Shell.Current.GoToAsync("//login");
                 }
                 else
@@ -93,11 +98,11 @@ namespace Mde.Project.Mobile.ViewModels
             }
             catch (Exception ex)
             {
-                // dankzij de update zie je hier nu de precieze serverboodschap (bv. "Email already exists")
                 ErrorMessage = $"Fout bij registreren: {ex.Message}";
             }
             finally { IsBusy = false; }
         }
+
 
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? name = null) =>
