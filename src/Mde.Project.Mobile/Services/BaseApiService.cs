@@ -1,7 +1,5 @@
 ﻿using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
 
 namespace Mde.Project.Mobile.Services
 {
@@ -12,40 +10,34 @@ namespace Mde.Project.Mobile.Services
 
         protected BaseApiService()
         {
+            // ROOT van je tunnel (geen /swagger, geen /api)
             _httpClient = new HttpClient
             {
-                BaseAddress = new Uri("https://65n69d92-62160.euw.devtunnels.ms/api/")
+                BaseAddress = new Uri("https://7lvw5x4s-62160.euw.devtunnels.ms/")
             };
         }
 
         protected async Task SetAuthorizationHeaderAsync()
         {
             var token = await SecureStorage.GetAsync(TokenKey);
-            if (!string.IsNullOrEmpty(token))
-            {
-                _httpClient.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", token);
-            }
+            _httpClient.DefaultRequestHeaders.Authorization =
+                string.IsNullOrEmpty(token) ? null : new AuthenticationHeaderValue("Bearer", token);
         }
 
-        protected async Task<T?> ExecuteApiCallAsync<T>(Func<Task<HttpResponseMessage>> apiCall)
+        protected async Task<T?> ExecuteApiCallAsync<T>(
+            Func<Task<HttpResponseMessage>> apiCall,
+            bool withAuth = true)
         {
-            try
+            if (withAuth) await SetAuthorizationHeaderAsync();
+            else _httpClient.DefaultRequestHeaders.Authorization = null;
+
+            var resp = await apiCall();
+            if (!resp.IsSuccessStatusCode)
             {
-                await SetAuthorizationHeaderAsync();
-                var response = await apiCall();
-                response.EnsureSuccessStatusCode();
-                return await response.Content.ReadFromJsonAsync<T>();
+                var body = await resp.Content.ReadAsStringAsync();   //toon serverboodschap
+                throw new Exception($"API call failed: {(int)resp.StatusCode} {resp.ReasonPhrase} - {body}");
             }
-            catch (HttpRequestException ex)
-            {
-                // Handle unauthorized or other HTTP errors
-                throw new Exception($"API call failed: {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"An error occurred: {ex.Message}");
-            }
+            return await resp.Content.ReadFromJsonAsync<T>();
         }
     }
 }

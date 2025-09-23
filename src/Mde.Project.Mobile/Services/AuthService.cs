@@ -6,22 +6,27 @@ namespace Mde.Project.Mobile.Services
 {
     public class AuthService : BaseApiService, IAuthService
     {
-        public async Task<JwtResponse?> LoginAsync(LoginModel login)
-        {
-            return await ExecuteApiCallAsync<JwtResponse>(() =>
-                _httpClient.PostAsJsonAsync("auth/login", login));
-        }
+        public Task<JwtResponse?> LoginAsync(LoginModel login) =>
+            ExecuteApiCallAsync<JwtResponse>(() =>
+            {
+                var url = new Uri(_httpClient.BaseAddress!, "api/auth/login");
+                System.Diagnostics.Debug.WriteLine("POST " + url);
+                return _httpClient.PostAsJsonAsync(url, login);
+            }, withAuth: false);
 
-        public async Task<JwtResponse?> RegisterAsync(RegisterModel register)
-        {
-            return await ExecuteApiCallAsync<JwtResponse>(() =>
-                _httpClient.PostAsJsonAsync("auth/register", register));
-        }
+        public Task<JwtResponse?> RegisterAsync(RegisterModel register) =>
+            ExecuteApiCallAsync<JwtResponse>(() =>
+            {
+                var url = new Uri(_httpClient.BaseAddress!, "api/auth/register");
+                System.Diagnostics.Debug.WriteLine("POST " + url);
+                return _httpClient.PostAsJsonAsync(url, register);
+            }, withAuth: false);
 
-        public async Task LogoutAsync()
+        public Task LogoutAsync()
         {
             SecureStorage.Remove(TokenKey);
             _httpClient.DefaultRequestHeaders.Authorization = null;
+            return Task.CompletedTask;
         }
     }
 }

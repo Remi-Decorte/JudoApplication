@@ -56,42 +56,47 @@ namespace Mde.Project.Mobile.ViewModels
         private async Task RegisterAsync()
         {
             if (IsBusy) return;
-            IsBusy = true;
-            ErrorMessage = string.Empty;
+            IsBusy = true; ErrorMessage = string.Empty;
 
             try
             {
+                // simpele lokale password-check die lijkt op Identity defaults
+                bool Strong(string p) =>
+                    p?.Length >= 6 && p.Any(char.IsUpper) && p.Any(char.IsLower) && p.Any(char.IsDigit);
+
+                if (!Strong(Password))
+                {
+                    ErrorMessage = "Kies een sterker wachtwoord (min. 6 tekens, hoofdletter, kleine letter en cijfer).";
+                    return;
+                }
+
                 var registerModel = new RegisterModel
                 {
-                    Username = Username,
-                    Email = Email,
+                    Username = Username?.Trim() ?? "",
+                    Email = Email?.Trim() ?? "",
                     Password = Password,
-                    FirstName = string.Empty,
-                    LastName = string.Empty
+                    // tijdelijk vullen om [Required] te respecteren
+                    FirstName = Username?.Trim() ?? "User",
+                    LastName = "-"                            // of vraag deze 2 velden in de UI
                 };
 
-                var jwtResponse = await _authService.RegisterAsync(registerModel);
-
-                if (jwtResponse != null && !string.IsNullOrWhiteSpace(jwtResponse.Token))
+                var jwt = await _authService.RegisterAsync(registerModel);
+                if (jwt != null && !string.IsNullOrWhiteSpace(jwt.Token))
                 {
-                    // Store the JWT token securely
-                    await SecureStorage.SetAsync("jwt_token", jwtResponse.Token);
-                    // Navigate to the home page
+                    await SecureStorage.SetAsync("jwt_token", jwt.Token);
                     await Shell.Current.GoToAsync("//home");
                 }
                 else
                 {
-                    ErrorMessage = "Registratie mislukt. Controleer je gegevens.";
+                    ErrorMessage = "Registratie mislukt.";
                 }
             }
             catch (Exception ex)
             {
+                // dankzij de update zie je hier nu de precieze serverboodschap (bv. "Email already exists")
                 ErrorMessage = $"Fout bij registreren: {ex.Message}";
             }
-            finally
-            {
-                IsBusy = false;
-            }
+            finally { IsBusy = false; }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
