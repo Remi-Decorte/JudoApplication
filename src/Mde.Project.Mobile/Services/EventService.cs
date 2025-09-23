@@ -1,13 +1,19 @@
-﻿using Mde.Project.Mobile.Interfaces;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
 
-namespace Mde.Project.Mobile.Services;
-
-public class EventService : BaseApiService, IEventService
+namespace Mde.Project.Mobile.Services
 {
-    public async Task<List<EventModel>?> GetUpcomingEventsAsync()
+    public class EventService : BaseApiService, IEventService
     {
-        return await ExecuteApiCallAsync<List<EventModel>>(() =>
-            _httpClient.GetAsync("events/upcoming"));
+        public Task<List<EventModel>?> GetUpcomingEventsAsync() =>
+            ExecuteApiCallAsync<List<EventModel>>(() =>
+            {
+                var url = new Uri(_httpClient.BaseAddress!, "api/Events/upcoming");
+                System.Diagnostics.Debug.WriteLine("GET " + url);
+                return _httpClient.GetAsync(url);
+            });
     }
 }

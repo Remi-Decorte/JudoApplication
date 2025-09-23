@@ -1,22 +1,28 @@
+using System;
+using System.Threading.Tasks;
 using System.Net.Http.Json;
+using System.Collections.Generic;
 using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
-
 
 namespace Mde.Project.Mobile.Services
 {
     public class TrainingService : BaseApiService, ITrainingService
     {
-        public async Task<List<TrainingEntryModel>?> GetUserTrainingEntriesAsync()
-        {
-            return await ExecuteApiCallAsync<List<TrainingEntryModel>>(() =>
-                _httpClient.GetAsync("trainingentries/by-user"));
-        }
+        public Task<List<TrainingEntryModel>?> GetUserTrainingEntriesAsync() =>
+            ExecuteApiCallAsync<List<TrainingEntryModel>>(() =>
+            {
+                var url = new Uri(_httpClient.BaseAddress!, "api/TrainingEntries/by-user");
+                System.Diagnostics.Debug.WriteLine("GET " + url);
+                return _httpClient.GetAsync(url);
+            });
 
-        public async Task<TrainingEntryModel?> CreateTrainingEntryAsync(TrainingEntryModel request)
-        {
-            return await ExecuteApiCallAsync<TrainingEntryModel>(() =>
-                _httpClient.PostAsJsonAsync("trainingentries", request));
-        }
+        public Task<TrainingEntryModel?> CreateTrainingEntryAsync(TrainingEntryModel request) =>
+            ExecuteApiCallAsync<TrainingEntryModel>(() =>
+            {
+                var url = new Uri(_httpClient.BaseAddress!, "api/TrainingEntries");
+                System.Diagnostics.Debug.WriteLine("POST " + url);
+                return _httpClient.PostAsJsonAsync(url, request);
+            });
     }
 }
