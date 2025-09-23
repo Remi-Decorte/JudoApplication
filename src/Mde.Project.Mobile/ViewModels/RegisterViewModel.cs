@@ -84,7 +84,7 @@ namespace Mde.Project.Mobile.ViewModels
                 if (jwt != null && !string.IsNullOrWhiteSpace(jwt.Token))
                 {
                     await SecureStorage.SetAsync("jwt_token", jwt.Token);
-                    await Shell.Current.GoToAsync("//home");
+                    await Shell.Current.GoToAsync("//login");
                 }
                 else
                 {

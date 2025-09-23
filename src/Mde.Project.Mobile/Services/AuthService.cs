@@ -10,7 +10,11 @@ namespace Mde.Project.Mobile.Services
             ExecuteApiCallAsync<JwtResponse>(() =>
             {
                 var url = new Uri(_httpClient.BaseAddress!, "api/auth/login");
-                System.Diagnostics.Debug.WriteLine("POST " + url);
+                System.Diagnostics.Debug.WriteLine($"=== LOGIN DEBUG ===");
+                System.Diagnostics.Debug.WriteLine($"BaseAddress: {_httpClient.BaseAddress}");
+                System.Diagnostics.Debug.WriteLine($"Full URL: {url}");
+                System.Diagnostics.Debug.WriteLine($"Username: {login.Username}");
+                System.Diagnostics.Debug.WriteLine($"==================");
                 return _httpClient.PostAsJsonAsync(url, login);
             }, withAuth: false);
 
@@ -18,7 +22,12 @@ namespace Mde.Project.Mobile.Services
             ExecuteApiCallAsync<JwtResponse>(() =>
             {
                 var url = new Uri(_httpClient.BaseAddress!, "api/auth/register");
-                System.Diagnostics.Debug.WriteLine("POST " + url);
+                System.Diagnostics.Debug.WriteLine($"=== REGISTER DEBUG ===");
+                System.Diagnostics.Debug.WriteLine($"BaseAddress: {_httpClient.BaseAddress}");
+                System.Diagnostics.Debug.WriteLine($"Full URL: {url}");
+                System.Diagnostics.Debug.WriteLine($"Username: {register.Username}");
+                System.Diagnostics.Debug.WriteLine($"Email: {register.Email}");
+                System.Diagnostics.Debug.WriteLine($"====================");
                 return _httpClient.PostAsJsonAsync(url, register);
             }, withAuth: false);
 
