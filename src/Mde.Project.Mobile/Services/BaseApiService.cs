@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 namespace Mde.Project.Mobile.Services
@@ -16,10 +17,10 @@ namespace Mde.Project.Mobile.Services
                 Timeout = TimeSpan.FromSeconds(30) // Verhoog timeout
             };
 
-            System.Diagnostics.Debug.WriteLine($"=== HTTP CLIENT INIT ===");
+            System.Diagnostics.Debug.WriteLine("=== HTTP CLIENT INIT ===");
             System.Diagnostics.Debug.WriteLine($"BaseAddress: {_httpClient.BaseAddress}");
             System.Diagnostics.Debug.WriteLine($"Timeout: {_httpClient.Timeout}");
-            System.Diagnostics.Debug.WriteLine($"========================");
+            System.Diagnostics.Debug.WriteLine("========================");
         }
 
         protected async Task SetAuthorizationHeaderAsync()
@@ -29,6 +30,10 @@ namespace Mde.Project.Mobile.Services
                 string.IsNullOrEmpty(token) ? null : new AuthenticationHeaderValue("Bearer", token);
         }
 
+        /// <summary>
+        /// Voor calls met JSON-response (GET/POST/PUT die iets teruggeven).
+        /// Retourneert default(T) bij 204/lege body.
+        /// </summary>
         protected async Task<T?> ExecuteApiCallAsync<T>(
             Func<Task<HttpResponseMessage>> apiCall,
             bool withAuth = true)
@@ -38,47 +43,63 @@ namespace Mde.Project.Mobile.Services
                 if (withAuth) await SetAuthorizationHeaderAsync();
                 else _httpClient.DefaultRequestHeaders.Authorization = null;
 
-                System.Diagnostics.Debug.WriteLine($"=== API CALL START ===");
-
+                System.Diagnostics.Debug.WriteLine("=== API CALL START ===");
                 var resp = await apiCall();
 
-                System.Diagnostics.Debug.WriteLine($"Response Status: {resp.StatusCode} ({(int)resp.StatusCode})");
-                System.Diagnostics.Debug.WriteLine($"Request URL: {resp.RequestMessage?.RequestUri}");
-                System.Diagnostics.Debug.WriteLine($"Request Method: {resp.RequestMessage?.Method}");
+                System.Diagnostics.Debug.WriteLine($"Status:  {resp.StatusCode} ({(int)resp.StatusCode})");
+                System.Diagnostics.Debug.WriteLine($"Method:  {resp.RequestMessage?.Method}");
+                System.Diagnostics.Debug.WriteLine($"URL:     {resp.RequestMessage?.RequestUri}");
 
                 if (!resp.IsSuccessStatusCode)
                 {
-                    var body = await resp.Content.ReadAsStringAsync();
-                    System.Diagnostics.Debug.WriteLine($"Error Response Body: {body}");
-                    System.Diagnostics.Debug.WriteLine($"Response Headers: {resp.Headers}");
-                    System.Diagnostics.Debug.WriteLine($"Content Headers: {resp.Content.Headers}");
+                    var bodyText = await resp.Content.ReadAsStringAsync();
+                    System.Diagnostics.Debug.WriteLine($"Error Body: {bodyText}");
+                    throw new Exception($"API call failed: {(int)resp.StatusCode} {resp.ReasonPhrase} - {bodyText}");
+                }
 
-                    throw new Exception($"API call failed: {(int)resp.StatusCode} {resp.ReasonPhrase} - {body}");
+                // 204 No Content of lege body → return default
+                if (resp.StatusCode == HttpStatusCode.NoContent ||
+                    resp.Content == null ||
+                    (resp.Content.Headers.ContentLength ?? 0) == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("No content returned.");
+                    return default;
                 }
 
                 var result = await resp.Content.ReadFromJsonAsync<T>();
-                System.Diagnostics.Debug.WriteLine($"Success! Result type: {typeof(T).Name}");
-                System.Diagnostics.Debug.WriteLine($"=== API CALL END ===");
-
+                System.Diagnostics.Debug.WriteLine($"Success! Parsed as {typeof(T).Name}");
+                System.Diagnostics.Debug.WriteLine("=== API CALL END ===");
                 return result;
             }
             catch (HttpRequestException httpEx)
             {
                 System.Diagnostics.Debug.WriteLine($"HTTP Request Exception: {httpEx.Message}");
-                System.Diagnostics.Debug.WriteLine($"Inner Exception: {httpEx.InnerException?.Message}");
                 throw new Exception($"Network error: {httpEx.Message}", httpEx);
             }
             catch (TaskCanceledException tcEx)
             {
                 System.Diagnostics.Debug.WriteLine($"Request Timeout: {tcEx.Message}");
-                throw new Exception("Request timeout. Check your internet connection and API availability.", tcEx);
+                throw new Exception("Request timeout. Check your connection/API.", tcEx);
             }
-            catch (Exception ex)
+        }
+
+        /// <summary>
+        /// Voor calls waar je GEEN body verwacht (bv. DELETE).
+        /// </summary>
+        protected async Task ExecuteNoContentAsync(
+            Func<Task<HttpResponseMessage>> apiCall,
+            bool withAuth = true)
+        {
+            if (withAuth) await SetAuthorizationHeaderAsync();
+            else _httpClient.DefaultRequestHeaders.Authorization = null;
+
+            var resp = await apiCall();
+            if (!resp.IsSuccessStatusCode)
             {
-                System.Diagnostics.Debug.WriteLine($"General Exception: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack Trace: {ex.StackTrace}");
-                throw;
+                var bodyText = await resp.Content.ReadAsStringAsync();
+                throw new Exception($"API call failed: {(int)resp.StatusCode} {resp.ReasonPhrase} - {bodyText}");
             }
+            // niets te deserializen
         }
     }
 }
