@@ -11,7 +11,6 @@ using Mde.Project.Mobile.Models;
 
 namespace Mde.Project.Mobile.ViewModels
 {
-
     public class AgendaViewModel : INotifyPropertyChanged
     {
         private readonly ITrainingService _trainingService;
@@ -23,7 +22,7 @@ namespace Mde.Project.Mobile.ViewModels
             var today = DateTime.Today;
             DisplayDate = today;
             SelectedDate = today;
-            // Start in maand
+
             _selectedViewMode = "Maand";
             SchedulerView = SchedulerView.Month;
 
@@ -55,7 +54,6 @@ namespace Mde.Project.Mobile.ViewModels
             });
         }
 
-        // === Agenda data ===
         public ObservableCollection<SchedulerAppointment> Appointments { get; }
 
         private DateTime _displayDate;
@@ -79,7 +77,7 @@ namespace Mde.Project.Mobile.ViewModels
                 {
                     if (string.Equals(value, "Week", StringComparison.OrdinalIgnoreCase))
                     {
-                        SchedulerView = SchedulerView.Week; 
+                        SchedulerView = SchedulerView.Week;
                         IsWeekView = true;
                     }
                     else
@@ -93,8 +91,6 @@ namespace Mde.Project.Mobile.ViewModels
         }
 
         private bool _isWeekView;
-        private Color color;
-
         public bool IsWeekView { get => _isWeekView; set => Set(ref _isWeekView, value); }
 
         public string CurrentPeriodTitle =>
@@ -106,7 +102,7 @@ namespace Mde.Project.Mobile.ViewModels
         public ICommand GoToTodayCommand { get; }
         public ICommand NewEntryCommand { get; }
 
-        // === Load trainings from backend and render ===
+        // === Laden uit backend ===
         public async Task LoadAsync()
         {
             var list = await _trainingService.GetUserTrainingEntriesAsync();
@@ -116,21 +112,20 @@ namespace Mde.Project.Mobile.ViewModels
 
             foreach (var t in list.OrderBy(x => x.Date))
             {
-                var brush = new SolidColorBrush(ColorForType(t.Type)); // fallback kleur o.b.v. type
+                var brush = new SolidColorBrush(ColorForType(t.Type)); // fallback kleur
                 Appointments.Add(new SchedulerAppointment
                 {
                     Subject = string.IsNullOrWhiteSpace(t.Type) ? "Training" : t.Type,
                     StartTime = t.Date,
-                    EndTime = t.Date.AddHours(1),
-                    Background = new SolidColorBrush(color)
+                    EndTime = t.Date.AddHours(1),      // zolang backend geen eindtijd heeft
+                    Background = brush
                 });
             }
         }
 
-        // === Save from popup and add to UI ===
+        // === Opslaan vanuit popup en meteen tonen ===
         public async Task CreateAndAddTrainingAsync(DateTime start, DateTime end, string type, Color color)
         {
-            // 1) save to backend
             var dto = new TrainingEntryModel
             {
                 Type = type,
@@ -140,7 +135,6 @@ namespace Mde.Project.Mobile.ViewModels
             };
             await _trainingService.CreateTrainingEntryAsync(dto);
 
-            // 2) add immediately to UI with chosen color
             Appointments.Add(new SchedulerAppointment
             {
                 Subject = type,
@@ -150,7 +144,6 @@ namespace Mde.Project.Mobile.ViewModels
             });
         }
 
-        // Fallback kleur: als we opnieuw laden en backend geen kleur bewaart
         private static Color ColorForType(string? type) =>
             (type ?? string.Empty).Trim().ToLowerInvariant() switch
             {

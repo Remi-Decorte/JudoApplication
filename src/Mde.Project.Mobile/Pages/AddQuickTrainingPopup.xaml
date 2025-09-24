@@ -10,19 +10,23 @@
     <Grid BackgroundColor="White"
           Padding="16,16,16,0"
           RowDefinitions="Auto,*,Auto"
-          HeightRequest="520"              
+          HeightRequest="560"
           VerticalOptions="End">
-        <!-- vaste hoogte, zodat de footer niet uit beeld valt -->
 
         <!-- Header -->
-        <HorizontalStackLayout Spacing="12">
-            <Label Text="Nieuwe gebeurtenis" FontAttributes="Bold" FontSize="18" />
-            <Label x:Name="LblDateHint" Text="" TextColor="#666" />
-        </HorizontalStackLayout>
+        <VerticalStackLayout Spacing="2">
+            <HorizontalStackLayout Spacing="12">
+                <Label Text="Nieuwe gebeurtenis" FontAttributes="Bold" FontSize="18" />
+                <Label x:Name="LblDateHint" Text="" TextColor="#666" />
+            </HorizontalStackLayout>
+            <!-- Dynamische eindtijd hint -->
+            <Label x:Name="LblEndHint" Text="Eindigt om —:—" TextColor="#666" FontSize="12"/>
+        </VerticalStackLayout>
 
         <!-- Form -->
         <ScrollView Grid.Row="1">
-            <VerticalStackLayout Spacing="14" Padding="0,0,0,8">
+            <VerticalStackLayout Spacing="14" Padding="0,6,0,8">
+
                 <!-- Type -->
                 <VerticalStackLayout>
                     <Label Text="Type training" FontAttributes="Bold" />
@@ -36,15 +40,29 @@
                     </Picker>
                 </VerticalStackLayout>
 
-                <!-- Datum / Tijd -->
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                <!-- Datum / Tijd + Duur -->
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                     <VerticalStackLayout>
                         <Label Text="Datum" FontAttributes="Bold" />
-                        <DatePicker x:Name="DatePick" />
+                        <DatePicker x:Name="DatePick" DateSelected="OnDateChanged"/>
                     </VerticalStackLayout>
+
                     <VerticalStackLayout Grid.Column="1">
-                        <Label Text="Tijd" FontAttributes="Bold" />
-                        <TimePicker x:Name="TimePick" />
+                        <Label Text="Start" FontAttributes="Bold" />
+                        <TimePicker x:Name="TimePick" PropertyChanged="OnTimeChanged"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Column="2">
+                        <Label Text="Duur" FontAttributes="Bold" />
+                        <Picker x:Name="DurationPicker" SelectedIndexChanged="OnDurationChanged">
+                            <Picker.Items>
+                                <x:String>30 min</x:String>
+                                <x:String>1 u</x:String>
+                                <x:String>1 u 30</x:String>
+                                <x:String>2 u</x:String>
+                                <x:String>3 u</x:String>
+                            </Picker.Items>
+                        </Picker>
                     </VerticalStackLayout>
                 </Grid>
 
@@ -62,10 +80,8 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- Footer (blijft vast onderaan) -->
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto"
-              Padding="0,8,0,16">
-            <!-- extra onder-padding -->
+        <!-- Footer -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Padding="0,8,0,16">
             <Button Text="Annuleren"
                     BackgroundColor="Transparent"
                     TextColor="#666666"

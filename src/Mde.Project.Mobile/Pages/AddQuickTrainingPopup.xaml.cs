@@ -1,28 +1,32 @@
 using CommunityToolkit.Maui.Views;
+using Microsoft.Maui.Graphics;
 
 namespace Mde.Project.Mobile.Pages.Popups;
 
 public partial class AddQuickTrainingPopup : Popup
 {
-    public record Result(DateTime Start, string Type, Color Color);
+    public record Result(DateTime Start, DateTime End, string Type, Color Color);
 
     private Color _selectedColor = Color.FromArgb("#1976D2");
+    private int _durationMinutes = 60; // default 1u
 
     public AddQuickTrainingPopup(DateTime suggestedStart)
     {
         InitializeComponent();
 
+        // init velden
         var start = suggestedStart == default ? DateTime.Now : suggestedStart;
-        // Month view taps are midnight; default to 09:00
         if (start.TimeOfDay == TimeSpan.Zero) start = start.Date.AddHours(9);
 
         DatePick.Date = start.Date;
         TimePick.Time = start.TimeOfDay;
-        TypePicker.SelectedIndex = 0;
-        LblDateHint.Text = start.ToString("ddd d MMM yyyy HH:mm");
+        DurationPicker.SelectedIndex = 1; // 1 u
 
+        // kleurknoppen
         foreach (var btn in new[] { C1, C2, C3, C4, C5 })
-            btn.Clicked += (s, e) => _selectedColor = ((Button)s!).BackgroundColor;
+            btn.Clicked += (_, __) => _selectedColor = ((Button)btn).BackgroundColor;
+
+        UpdateHints();
     }
 
     private void OnCancel(object? sender, EventArgs e) => Close(null);
@@ -30,7 +34,42 @@ public partial class AddQuickTrainingPopup : Popup
     private void OnSave(object? sender, EventArgs e)
     {
         var start = DatePick.Date.Add(TimePick.Time);
+        var end = start.AddMinutes(_durationMinutes);
         var type = (TypePicker.SelectedItem as string) ?? "Training";
-        Close(new Result(start, type, _selectedColor));
+
+        Close(new Result(start, end, type, _selectedColor));
+    }
+
+    private void OnDateChanged(object? s, DateChangedEventArgs e) => UpdateHints();
+
+    // TimePicker heeft geen TimeChanged-event in MAUI;
+    // we luisteren naar PropertyChanged("Time")
+    private void OnTimeChanged(object? s, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(TimePicker.Time))
+            UpdateHints();
+    }
+
+    private void OnDurationChanged(object? s, EventArgs e)
+    {
+        _durationMinutes = DurationPicker.SelectedIndex switch
+        {
+            0 => 30,
+            1 => 60,
+            2 => 90,
+            3 => 120,
+            4 => 180,
+            _ => 60
+        };
+        UpdateHints();
+    }
+
+    private void UpdateHints()
+    {
+        var start = DatePick.Date.Add(TimePick.Time);
+        var end = start.AddMinutes(_durationMinutes);
+
+        LblDateHint.Text = start.ToString("ddd d MMM yyyy HH:mm");
+        LblEndHint.Text = $"Eindigt om {end:HH:mm}";
     }
 }
