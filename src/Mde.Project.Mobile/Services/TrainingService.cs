@@ -24,5 +24,10 @@ namespace Mde.Project.Mobile.Services
                 System.Diagnostics.Debug.WriteLine("POST " + url);
                 return _httpClient.PostAsJsonAsync(url, request);
             });
+        public Task<TrainingEntryModel?> UpdateTrainingEntryAsync(TrainingEntryModel request) =>
+       ExecuteApiCallAsync<TrainingEntryModel>(() => _httpClient.PutAsJsonAsync($"api/trainingentries/{request.Id}", request));
+
+        public Task DeleteTrainingEntryAsync(int id) =>
+            ExecuteApiCallAsync<object?>(() => _httpClient.DeleteAsync($"api/trainingentries/{id}"));
     }
 }

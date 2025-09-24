@@ -11,20 +11,43 @@ public partial class AddQuickTrainingPopup : Popup
     private int _durationMinutes = 60; // default 1u
 
     public AddQuickTrainingPopup(DateTime suggestedStart)
+        : this(suggestedStart, TimeSpan.FromHours(1), null, null) { }
+
+    // overload voor bewerken: vooraf ingevulde waarden
+    public AddQuickTrainingPopup(DateTime suggestedStart,
+                                 TimeSpan? initialDuration,
+                                 string? initialType,
+                                 Color? initialColor)
     {
         InitializeComponent();
 
-        // init velden
         var start = suggestedStart == default ? DateTime.Now : suggestedStart;
         if (start.TimeOfDay == TimeSpan.Zero) start = start.Date.AddHours(9);
 
         DatePick.Date = start.Date;
         TimePick.Time = start.TimeOfDay;
-        DurationPicker.SelectedIndex = 1; // 1 u
 
-        // kleurknoppen
-        foreach (var btn in new[] { C1, C2, C3, C4, C5 })
-            btn.Clicked += (_, __) => _selectedColor = ((Button)btn).BackgroundColor;
+        // duur init
+        var dur = initialDuration ?? TimeSpan.FromHours(1);
+        _durationMinutes = (int)dur.TotalMinutes;
+        DurationPicker.SelectedIndex = _durationMinutes switch { 30 => 0, 60 => 1, 90 => 2, 120 => 3, 180 => 4, _ => 1 };
+
+        // type init
+        if (!string.IsNullOrWhiteSpace(initialType))
+            TypePicker.SelectedItem = initialType;
+        else
+            TypePicker.SelectedIndex = 0;
+
+        // kleur init
+        if (initialColor is not null) _selectedColor = initialColor;
+
+        // events
+        DatePick.DateSelected += OnDateChanged;
+        TimePick.PropertyChanged += OnTimeChanged;
+        DurationPicker.SelectedIndexChanged += OnDurationChanged;
+
+        foreach (var b in new[] { C1, C2, C3, C4, C5 })
+            b.Clicked += (s, _) => _selectedColor = ((Button)s).BackgroundColor;
 
         UpdateHints();
     }
@@ -42,8 +65,6 @@ public partial class AddQuickTrainingPopup : Popup
 
     private void OnDateChanged(object? s, DateChangedEventArgs e) => UpdateHints();
 
-    // TimePicker heeft geen TimeChanged-event in MAUI;
-    // we luisteren naar PropertyChanged("Time")
     private void OnTimeChanged(object? s, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(TimePicker.Time))

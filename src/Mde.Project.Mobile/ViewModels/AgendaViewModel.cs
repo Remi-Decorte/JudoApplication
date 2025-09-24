@@ -26,7 +26,7 @@ namespace Mde.Project.Mobile.ViewModels
             _selectedViewMode = "Maand";
             SchedulerView = SchedulerView.Month;
 
-            Appointments = new ObservableCollection<SchedulerAppointment>();
+            Appointments = new ObservableCollection<TrainingAppointment>();
 
             PreviousPeriodCommand = new Command(() =>
             {
@@ -54,7 +54,7 @@ namespace Mde.Project.Mobile.ViewModels
             });
         }
 
-        public ObservableCollection<SchedulerAppointment> Appointments { get; }
+        public ObservableCollection<TrainingAppointment> Appointments { get; }
 
         private DateTime _displayDate;
         public DateTime DisplayDate { get => _displayDate; set => Set(ref _displayDate, value); }
@@ -107,23 +107,23 @@ namespace Mde.Project.Mobile.ViewModels
         {
             var list = await _trainingService.GetUserTrainingEntriesAsync();
             Appointments.Clear();
-
             if (list == null) return;
 
             foreach (var t in list.OrderBy(x => x.Date))
             {
-                var brush = new SolidColorBrush(ColorForType(t.Type)); // fallback kleur
-                Appointments.Add(new SchedulerAppointment
+                var color = ColorForType(t.Type);
+                Appointments.Add(new TrainingAppointment
                 {
+                    Training = t,
                     Subject = string.IsNullOrWhiteSpace(t.Type) ? "Training" : t.Type,
                     StartTime = t.Date,
-                    EndTime = t.Date.AddHours(1),      // zolang backend geen eindtijd heeft
-                    Background = brush
+                    EndTime = t.Date.AddHours(1),           // zolang backend geen eindtijd heeft
+                    Background = new SolidColorBrush(color)
                 });
             }
         }
 
-        // === Opslaan vanuit popup en meteen tonen ===
+        // === Nieuw aanmaken ===
         public async Task CreateAndAddTrainingAsync(DateTime start, DateTime end, string type, Color color)
         {
             var dto = new TrainingEntryModel
@@ -133,15 +133,43 @@ namespace Mde.Project.Mobile.ViewModels
                 Comment = string.Empty,
                 TechniqueScores = new(),
             };
-            await _trainingService.CreateTrainingEntryAsync(dto);
+            var saved = await _trainingService.CreateTrainingEntryAsync(dto);
 
-            Appointments.Add(new SchedulerAppointment
+            Appointments.Add(new TrainingAppointment
             {
+                Training = saved ?? dto,
                 Subject = type,
                 StartTime = start,
                 EndTime = end,
                 Background = new SolidColorBrush(color)
             });
+        }
+
+        // === Bewerken ===
+        public async Task UpdateTrainingAsync(TrainingAppointment appt, DateTime start, DateTime end, string type, Color color)
+        {
+            if (appt?.Training == null) return;
+
+            appt.Training.Type = type;
+            appt.Training.Date = start;
+
+            await _trainingService.UpdateTrainingEntryAsync(appt.Training);
+
+            appt.Subject = type;
+            appt.StartTime = start;
+            appt.EndTime = end;
+            appt.Background = new SolidColorBrush(color);
+
+            OnPropertyChanged(nameof(Appointments)); // force refresh
+        }
+
+        // === Verwijderen ===
+        public async Task DeleteTrainingAsync(TrainingAppointment appt)
+        {
+            if (appt?.Training == null) return;
+
+            await _trainingService.DeleteTrainingEntryAsync(appt.Training.Id);
+            Appointments.Remove(appt);
         }
 
         private static Color ColorForType(string? type) =>

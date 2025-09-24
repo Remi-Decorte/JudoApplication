@@ -2,6 +2,7 @@ using CommunityToolkit.Maui.Views;
 using Syncfusion.Maui.Scheduler;
 using Mde.Project.Mobile.Pages.Popups;
 using Mde.Project.Mobile.ViewModels;
+using Microsoft.Maui.Graphics;
 
 namespace Mde.Project.Mobile.Pages;
 
@@ -31,22 +32,46 @@ public partial class AgendaPage : ContentPage
 
     private async void Scheduler_Tapped(object sender, SchedulerTappedEventArgs e)
     {
-        if (e.Element is not SchedulerElement.SchedulerCell and not SchedulerElement.Appointment)
+        // Tap op lege cel -> nieuwe afspraak
+        if (e.Element is SchedulerElement.SchedulerCell && e.Date.HasValue)
+        {
+            var popup = new AddQuickTrainingPopup(e.Date.Value);
+            if (await this.ShowPopupAsync(popup) is AddQuickTrainingPopup.Result r1)
+            {
+                await _vm.CreateAndAddTrainingAsync(r1.Start, r1.End, r1.Type, r1.Color);
+            }
             return;
-
-        var suggested = e.Date ?? DateTime.Now;
-
-        var popup = new AddQuickTrainingPopup(suggested);
-        var result = await this.ShowPopupAsync(popup) as AddQuickTrainingPopup.Result;
-        if (result is null) return;
-
-        try
-        {
-            await _vm.CreateAndAddTrainingAsync(result.Start, result.End, result.Type, result.Color);
         }
-        catch (Exception ex)
+
+        // Tap op bestaande afspraak -> bewerken of verwijderen
+        if (e.Element is SchedulerElement.Appointment &&
+            e.Appointments?.FirstOrDefault() is TrainingAppointment tapAppt)
         {
-            await DisplayAlert("Opslaan mislukt", ex.Message, "OK");
+            var action = await DisplayActionSheet(tapAppt.Subject, "Annuleren", null, "Bewerken", "Verwijderen");
+            if (action == "Verwijderen")
+            {
+                var ok = await DisplayAlert("Verwijderen", "Afspraak verwijderen?", "Ja", "Nee");
+                if (ok) await _vm.DeleteTrainingAsync(tapAppt);
+                return;
+            }
+
+            if (action == "Bewerken")
+            {
+                var start = tapAppt.StartTime;
+                var duration = tapAppt.EndTime - tapAppt.StartTime;
+                var color = (tapAppt.Background as SolidColorBrush)?.Color ?? Colors.Blue;
+
+                var popup = new AddQuickTrainingPopup(
+                    suggestedStart: start,
+                    initialDuration: duration,
+                    initialType: tapAppt.Subject,
+                    initialColor: color);
+
+                if (await this.ShowPopupAsync(popup) is AddQuickTrainingPopup.Result r2)
+                {
+                    await _vm.UpdateTrainingAsync(tapAppt, r2.Start, r2.End, r2.Type, r2.Color);
+                }
+            }
         }
     }
 }
