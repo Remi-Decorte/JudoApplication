@@ -6,22 +6,36 @@ namespace Mde.Project.Mobile.Services
 {
     public class AuthService : BaseApiService, IAuthService
     {
-        public async Task<JwtResponse?> LoginAsync(LoginModel login)
-        {
-            return await ExecuteApiCallAsync<JwtResponse>(() =>
-                _httpClient.PostAsJsonAsync("auth/login", login));
-        }
+        public Task<JwtResponse?> LoginAsync(LoginModel login) =>
+            ExecuteApiCallAsync<JwtResponse>(() =>
+            {
+                var url = new Uri(_httpClient.BaseAddress!, "api/auth/login");
+                System.Diagnostics.Debug.WriteLine($"=== LOGIN DEBUG ===");
+                System.Diagnostics.Debug.WriteLine($"BaseAddress: {_httpClient.BaseAddress}");
+                System.Diagnostics.Debug.WriteLine($"Full URL: {url}");
+                System.Diagnostics.Debug.WriteLine($"Username: {login.Username}");
+                System.Diagnostics.Debug.WriteLine($"==================");
+                return _httpClient.PostAsJsonAsync(url, login);
+            }, withAuth: false);
 
-        public async Task<JwtResponse?> RegisterAsync(RegisterModel register)
-        {
-            return await ExecuteApiCallAsync<JwtResponse>(() =>
-                _httpClient.PostAsJsonAsync("auth/register", register));
-        }
+        public Task<JwtResponse?> RegisterAsync(RegisterModel register) =>
+            ExecuteApiCallAsync<JwtResponse>(() =>
+            {
+                var url = new Uri(_httpClient.BaseAddress!, "api/auth/register");
+                System.Diagnostics.Debug.WriteLine($"=== REGISTER DEBUG ===");
+                System.Diagnostics.Debug.WriteLine($"BaseAddress: {_httpClient.BaseAddress}");
+                System.Diagnostics.Debug.WriteLine($"Full URL: {url}");
+                System.Diagnostics.Debug.WriteLine($"Username: {register.Username}");
+                System.Diagnostics.Debug.WriteLine($"Email: {register.Email}");
+                System.Diagnostics.Debug.WriteLine($"====================");
+                return _httpClient.PostAsJsonAsync(url, register);
+            }, withAuth: false);
 
-        public async Task LogoutAsync()
+        public Task LogoutAsync()
         {
             SecureStorage.Remove(TokenKey);
             _httpClient.DefaultRequestHeaders.Authorization = null;
+            return Task.CompletedTask;
         }
     }
 }

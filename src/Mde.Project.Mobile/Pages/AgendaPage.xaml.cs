@@ -19,7 +19,6 @@ namespace Mde.Project.Mobile.Pages
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            await _vm.LoadTrainingsAsync();
         }
 
         // <- DIT is de handler die XAML verwacht

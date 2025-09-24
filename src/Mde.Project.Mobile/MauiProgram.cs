@@ -5,6 +5,7 @@ using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Services.Mock;
 using CommunityToolkit.Maui;
 using Mde.Project.Mobile.Services;
+using Syncfusion.Maui.Core.Hosting;
 
 namespace Mde.Project.Mobile
 {
@@ -15,6 +16,7 @@ namespace Mde.Project.Mobile
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .ConfigureSyncfusionCore()
                 .UseMauiCommunityToolkit()
                 .ConfigureFonts(fonts =>
                 {

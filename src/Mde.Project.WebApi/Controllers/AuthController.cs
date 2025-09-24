@@ -1,13 +1,15 @@
 ﻿using Mde.Project.WebApi.DTOs.Requests;
 using Mde.Project.WebApi.Entities;
 using Mde.Project.WebApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Mde.Project.WebApi.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/auth")] // Expliciet "auth" in kleine letters
+    [AllowAnonymous]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -43,6 +45,7 @@ namespace Mde.Project.WebApi.Controllers
             {
                 return BadRequest(ModelState);
             }
+
             request.Username = request.Username.Replace(" ", "");
 
             // Check if user already exists
