@@ -45,8 +45,6 @@
                         BackgroundColor="Transparent"
                         TextColor="#0078D4"
                         Padding="8,4" />
-
-                <!-- Dropdown om Week/Maand te kiezen -->
                 <Picker Grid.Column="1"
                         Title="Weergave"
                         ItemsSource="{Binding ViewModes}"
@@ -54,8 +52,6 @@
                         WidthRequest="130"
                         FontSize="14"
                         HorizontalOptions="Start" />
-
-                <!-- Titel van huidige periode (weekrange of maand) -->
                 <Label Grid.Column="2"
                        Text="{Binding CurrentPeriodTitle}"
                        FontAttributes="Bold"
@@ -63,7 +59,6 @@
                        HorizontalOptions="Center"
                        VerticalOptions="Center"
                        LineBreakMode="TailTruncation" />
-
                 <Button Grid.Column="3"
                         Text="Volgende"
                         Command="{Binding NextPeriodCommand}"
@@ -75,12 +70,13 @@
 
         <!-- Scheduler -->
         <Grid Grid.Row="2" Padding="12">
-            <scheduler:SfScheduler
-                x:Name="Scheduler"
-                View="{Binding SchedulerView}"
-                FirstDayOfWeek="Monday"
-                DisplayDate="{Binding DisplayDate, Mode=TwoWay}"
-                SelectedDate="{Binding SelectedDate, Mode=TwoWay}" />
+            <scheduler:SfScheduler x:Name="Scheduler"
+                                   View="{Binding SchedulerView}"
+                                   FirstDayOfWeek="Monday"
+                                   DisplayDate="{Binding DisplayDate, Mode=TwoWay}"
+                                   SelectedDate="{Binding SelectedDate, Mode=TwoWay}"
+                                   AppointmentsSource="{Binding Appointments}"
+                                   Tapped="Scheduler_Tapped" />
         </Grid>
     </Grid>
 </ContentPage>

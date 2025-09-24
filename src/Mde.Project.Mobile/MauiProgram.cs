@@ -6,6 +6,7 @@ using Mde.Project.Mobile.Services.Mock;
 using CommunityToolkit.Maui;
 using Mde.Project.Mobile.Services;
 using Syncfusion.Maui.Core.Hosting;
+using Mde.Project.Mobile.Pages.Popups;
 
 namespace Mde.Project.Mobile
 {
@@ -51,6 +52,7 @@ namespace Mde.Project.Mobile
             builder.Services.AddTransient<AddTrainingPage>();
             builder.Services.AddTransient<RegisterPage>();
             builder.Services.AddTransient<EventsPage>();
+            builder.Services.AddTransient<AddQuickTrainingPopup>();
 
 #if DEBUG
             builder.Logging.AddDebug();
