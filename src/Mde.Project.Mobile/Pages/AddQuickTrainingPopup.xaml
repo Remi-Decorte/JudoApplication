@@ -19,14 +19,12 @@
                 <Label Text="Nieuwe gebeurtenis" FontAttributes="Bold" FontSize="18" />
                 <Label x:Name="LblDateHint" Text="" TextColor="#666" />
             </HorizontalStackLayout>
-            <!-- Dynamische eindtijd hint -->
             <Label x:Name="LblEndHint" Text="Eindigt om —:—" TextColor="#666" FontSize="12"/>
         </VerticalStackLayout>
 
         <!-- Form -->
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Spacing="14" Padding="0,6,0,8">
-
                 <!-- Type -->
                 <VerticalStackLayout>
                     <Label Text="Type training" FontAttributes="Bold" />
@@ -40,7 +38,7 @@
                     </Picker>
                 </VerticalStackLayout>
 
-                <!-- Datum / Tijd + Duur -->
+                <!-- Datum / Tijd / Duur -->
                 <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                     <VerticalStackLayout>
                         <Label Text="Datum" FontAttributes="Bold" />
@@ -80,14 +78,21 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- Footer -->
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Padding="0,8,0,16">
-            <Button Text="Annuleren"
+        <!-- Footer: drie kolommen -->
+        <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" Padding="0,8,0,16">
+            <Button Grid.Column="0"
+                    Text="Annuleren"
                     BackgroundColor="Transparent"
                     TextColor="#666666"
                     Clicked="OnCancel" />
 
             <Button Grid.Column="1"
+                    Text="Volledige invoer"
+                    BackgroundColor="Transparent"
+                    TextColor="#0078D4"
+                    Clicked="OnOpenFullEditor" />
+
+            <Button Grid.Column="2"
                     Text="Opslaan"
                     BackgroundColor="#0078D4"
                     TextColor="White"

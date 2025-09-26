@@ -13,7 +13,7 @@ namespace Mde.Project.Mobile.Services
         {
             _httpClient = new HttpClient
             {
-                BaseAddress = new Uri("https://7lvw5x4s-62160.euw.devtunnels.ms/"),
+                BaseAddress = new Uri("https://mr1pbg1j-62160.euw.devtunnels.ms/"),
                 Timeout = TimeSpan.FromSeconds(30) // Verhoog timeout
             };
 

@@ -5,19 +5,17 @@ namespace Mde.Project.Mobile.Pages.Popups;
 
 public partial class AddQuickTrainingPopup : Popup
 {
-    public record Result(DateTime Start, DateTime End, string Type, Color Color);
+    // ?? extra flag toegevoegd
+    public record Result(DateTime Start, DateTime End, string Type, Color Color, bool OpenFullEditor = false);
 
     private Color _selectedColor = Color.FromArgb("#1976D2");
-    private int _durationMinutes = 60; // default 1u
+    private int _durationMinutes = 60; // default 1 uur 
 
     public AddQuickTrainingPopup(DateTime suggestedStart)
         : this(suggestedStart, TimeSpan.FromHours(1), null, null) { }
 
     // overload voor bewerken: vooraf ingevulde waarden
-    public AddQuickTrainingPopup(DateTime suggestedStart,
-                                 TimeSpan? initialDuration,
-                                 string? initialType,
-                                 Color? initialColor)
+    public AddQuickTrainingPopup(DateTime suggestedStart, TimeSpan? initialDuration, string? initialType, Color? initialColor)
     {
         InitializeComponent();
 
@@ -30,7 +28,15 @@ public partial class AddQuickTrainingPopup : Popup
         // duur init
         var dur = initialDuration ?? TimeSpan.FromHours(1);
         _durationMinutes = (int)dur.TotalMinutes;
-        DurationPicker.SelectedIndex = _durationMinutes switch { 30 => 0, 60 => 1, 90 => 2, 120 => 3, 180 => 4, _ => 1 };
+        DurationPicker.SelectedIndex = _durationMinutes switch
+        {
+            30 => 0,
+            60 => 1,
+            90 => 2,
+            120 => 3,
+            180 => 4,
+            _ => 1
+        };
 
         // type init
         if (!string.IsNullOrWhiteSpace(initialType))
@@ -60,7 +66,17 @@ public partial class AddQuickTrainingPopup : Popup
         var end = start.AddMinutes(_durationMinutes);
         var type = (TypePicker.SelectedItem as string) ?? "Training";
 
-        Close(new Result(start, end, type, _selectedColor));
+        Close(new Result(start, end, type, _selectedColor, OpenFullEditor: false));
+    }
+
+    //open de volledige editor (geen directe save)
+    private void OnOpenFullEditor(object? sender, EventArgs e)
+    {
+        var start = DatePick.Date.Add(TimePick.Time);
+        var end = start.AddMinutes(_durationMinutes);
+        var type = (TypePicker.SelectedItem as string) ?? "Training";
+
+        Close(new Result(start, end, type, _selectedColor, OpenFullEditor: true));
     }
 
     private void OnDateChanged(object? s, DateChangedEventArgs e) => UpdateHints();

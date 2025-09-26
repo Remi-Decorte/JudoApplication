@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using CommunityToolkit.Maui.Views;
 using Syncfusion.Maui.Scheduler;
 using Mde.Project.Mobile.Pages.Popups;
@@ -38,7 +40,19 @@ public partial class AgendaPage : ContentPage
             var popup = new AddQuickTrainingPopup(e.Date.Value);
             if (await this.ShowPopupAsync(popup) is AddQuickTrainingPopup.Result r1)
             {
-                await _vm.CreateAndAddTrainingAsync(r1.Start, r1.End, r1.Type, r1.Color);
+                if (r1.OpenFullEditor)
+                {
+                    var iso = Uri.EscapeDataString(r1.Start.ToString("o"));
+                    var mins = (int)(r1.End - r1.Start).TotalMinutes;
+                    var type = Uri.EscapeDataString(r1.Type ?? string.Empty);
+
+                    await Shell.Current.GoToAsync(
+                        $"{nameof(Pages.AddTrainingPage)}?date={iso}&duration={mins}&type={type}");
+                }
+                else
+                {
+                    await _vm.CreateAndAddTrainingAsync(r1.Start, r1.End, r1.Type, r1.Color);
+                }
             }
             return;
         }
@@ -69,7 +83,19 @@ public partial class AgendaPage : ContentPage
 
                 if (await this.ShowPopupAsync(popup) is AddQuickTrainingPopup.Result r2)
                 {
-                    await _vm.UpdateTrainingAsync(tapAppt, r2.Start, r2.End, r2.Type, r2.Color);
+                    if (r2.OpenFullEditor)
+                    {
+                        var iso = Uri.EscapeDataString(r2.Start.ToString("o"));
+                        var mins = (int)(r2.End - r2.Start).TotalMinutes;
+                        var type = Uri.EscapeDataString(r2.Type ?? string.Empty);
+
+                        await Shell.Current.GoToAsync(
+                            $"{nameof(Pages.AddTrainingPage)}?date={iso}&duration={mins}&type={type}");
+                    }
+                    else
+                    {
+                        await _vm.UpdateTrainingAsync(tapAppt, r2.Start, r2.End, r2.Type, r2.Color);
+                    }
                 }
             }
         }
