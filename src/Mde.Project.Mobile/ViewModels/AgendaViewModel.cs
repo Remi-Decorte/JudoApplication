@@ -5,9 +5,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Microsoft.Maui.Graphics;
-using Syncfusion.Maui.Scheduler;
 using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
+using Syncfusion.Maui.Scheduler;
 
 namespace Mde.Project.Mobile.ViewModels
 {
@@ -111,13 +111,15 @@ namespace Mde.Project.Mobile.ViewModels
 
             foreach (var t in list.OrderBy(x => x.Date))
             {
-                var color = ColorForType(t.Type);
+                var color = string.IsNullOrWhiteSpace(t.Color)
+                            ? ColorForType(t.Type)
+                            : Color.FromArgb(t.Color);
                 Appointments.Add(new TrainingAppointment
                 {
                     Training = t,
                     Subject = string.IsNullOrWhiteSpace(t.Type) ? "Training" : t.Type,
                     StartTime = t.Date,
-                    EndTime = t.Date.AddHours(1),           // zolang backend geen eindtijd heeft
+                    EndTime = (t.EndDate > t.Date) ? t.EndDate : t.Date.AddHours(1), // use actual end if available
                     Background = new SolidColorBrush(color)
                 });
             }
@@ -179,6 +181,7 @@ namespace Mde.Project.Mobile.ViewModels
                 "conditioneel" => Color.FromArgb("#2E7D32"),
                 "wedstrijdvoorbereiding" => Color.FromArgb("#F57C00"),
                 "herstel" => Color.FromArgb("#8E24AA"),
+                "randori" => Color.FromArgb("#D32F2F"),
                 _ => Color.FromArgb("#1976D2")
             };
 
