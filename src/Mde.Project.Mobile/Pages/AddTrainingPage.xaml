@@ -66,6 +66,26 @@
                 </HorizontalStackLayout>
             </VerticalStackLayout>
 
+            <VerticalStackLayout BackgroundColor="White" Padding="12" Spacing="6">
+                <Label Text="Herhaling" FontAttributes="Bold" />
+                <Picker Title="Geen herhaling" ItemsSource="{Binding RecurrenceOptions}" SelectedItem="{Binding SelectedRecurrence}" />
+                <HorizontalStackLayout IsVisible="{Binding IsCustomRecurrence}" Spacing="0" VerticalOptions="Center">
+                    <CheckBox IsChecked="{Binding MondaySelected}" />
+                    <Label Text="Ma" Margin="0,0,16,0"/>
+                    <CheckBox IsChecked="{Binding TuesdaySelected}" />
+                    <Label Text="Di" Margin="0,0,16,0"/>
+                    <CheckBox IsChecked="{Binding WednesdaySelected}" />
+                    <Label Text="Wo" Margin="0,0,16,0"/>
+                    <CheckBox IsChecked="{Binding ThursdaySelected}" />
+                    <Label Text="Do" Margin="0,0,16,0"/>
+                    <CheckBox IsChecked="{Binding FridaySelected}" />
+                    <Label Text="Vr" Margin="0,0,16,0"/>
+                    <CheckBox IsChecked="{Binding SaturdaySelected}" />
+                    <Label Text="Za" Margin="0,0,16,0"/>
+                    <CheckBox IsChecked="{Binding SundaySelected}" />
+                    <Label Text="Zo" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
 
             <!-- Opslaan -->
             <Button Text="Opslaan"
