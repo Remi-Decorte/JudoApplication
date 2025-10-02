@@ -35,5 +35,17 @@ namespace Mde.Project.Mobile.Pages
 
             }
         }
+        private void OnColorButtonClicked(object sender, EventArgs e)
+        {
+            if (BindingContext is AddTrainingViewModel vm)
+            {
+                var btn = (Button)sender;
+                var col = btn.BackgroundColor;
+                int r = (int)(col.Red * 255);
+                int g = (int)(col.Green * 255);
+                int b = (int)(col.Blue * 255);
+                vm.SelectedColor = $"#{r:X2}{g:X2}{b:X2}";
+            }
+        }
     }
 }

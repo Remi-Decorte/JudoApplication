@@ -55,6 +55,18 @@
                 </CollectionView>
             </VerticalStackLayout>
 
+            <VerticalStackLayout BackgroundColor="White" Padding="12" Spacing="8">
+                <Label Text="Kleur" FontAttributes="Bold" />
+                <HorizontalStackLayout Spacing="12">
+                    <Button x:Name="C1" WidthRequest="36" HeightRequest="36" CornerRadius="18" BackgroundColor="#1976D2" Clicked="OnColorButtonClicked" />
+                    <Button x:Name="C2" WidthRequest="36" HeightRequest="36" CornerRadius="18" BackgroundColor="#2E7D32" Clicked="OnColorButtonClicked" />
+                    <Button x:Name="C3" WidthRequest="36" HeightRequest="36" CornerRadius="18" BackgroundColor="#F57C00" Clicked="OnColorButtonClicked" />
+                    <Button x:Name="C4" WidthRequest="36" HeightRequest="36" CornerRadius="18" BackgroundColor="#8E24AA" Clicked="OnColorButtonClicked" />
+                    <Button x:Name="C5" WidthRequest="36" HeightRequest="36" CornerRadius="18" BackgroundColor="#D32F2F" Clicked="OnColorButtonClicked" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+
+
             <!-- Opslaan -->
             <Button Text="Opslaan"
                     Command="{Binding SaveCommand}"

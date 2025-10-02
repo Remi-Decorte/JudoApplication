@@ -16,5 +16,6 @@ namespace Mde.Project.Mobile.Models
         public int Id { get; set; }
         public List<TrainingAttachmentModel> Attachments { get; set; } = new();
         public List<OpponentNoteModel>? OpponentNotes { get; set; } = new();
+        public string Color { get; set; } = string.Empty;
     }
 }

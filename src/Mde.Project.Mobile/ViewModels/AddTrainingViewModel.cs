@@ -20,19 +20,16 @@ namespace Mde.Project.Mobile.ViewModels
 
             Date = DateTime.Today;
             TrainingTypes = new() { "Techniek", "Conditioneel", "Wedstrijdvoorbereiding", "Herstel", "Randori" };
-            SelectedType = TrainingTypes[0];  // default: Techniek
+            SelectedType = TrainingTypes[0];
 
-            // Default tijden (nu afgerond op kwartier, duur 1u; andere dagen: 09:00–10:00)
             var now = DateTime.Now;
-            if (Date.Date == DateTime.Today)
-            {
-                StartTime = new TimeSpan(now.Hour, (now.Minute / 15) * 15, 0);
-            }
-            else
-            {
-                StartTime = new TimeSpan(9, 0, 0);
-            }
+            StartTime = (Date.Date == DateTime.Today)
+                ? new TimeSpan(now.Hour, (now.Minute / 15) * 15, 0)
+                : new TimeSpan(9, 0, 0);
             EndTime = StartTime.Add(TimeSpan.FromHours(1));
+
+            // Commit 3: default kleur
+            SelectedColor = "#1976D2";
 
             Techniques = new ObservableCollection<TechniqueScoreModel>();
             OpponentNotes = new ObservableCollection<OpponentNoteModel>();
@@ -58,29 +55,25 @@ namespace Mde.Project.Mobile.ViewModels
             _ = InitCategoriesAsync();
         }
 
-        // =========== Datum & Tijd ===========
+        // ===== Datum & tijd =====
         private DateTime _date;
-        public DateTime Date
-        {
-            get => _date;
-            set { _date = value; OnPropertyChanged(); }
-        }
+        public DateTime Date { get => _date; set { _date = value; OnPropertyChanged(); } }
 
         private TimeSpan _startTime;
-        public TimeSpan StartTime
-        {
-            get => _startTime;
-            set { _startTime = value; OnPropertyChanged(); }
-        }
+        public TimeSpan StartTime { get => _startTime; set { _startTime = value; OnPropertyChanged(); } }
 
         private TimeSpan _endTime;
-        public TimeSpan EndTime
+        public TimeSpan EndTime { get => _endTime; set { _endTime = value; OnPropertyChanged(); } }
+
+        // ===== Kleur (commit 3) =====
+        private string _selectedColor = "#1976D2";
+        public string SelectedColor
         {
-            get => _endTime;
-            set { _endTime = value; OnPropertyChanged(); }
+            get => _selectedColor;
+            set { _selectedColor = value; OnPropertyChanged(); }
         }
 
-        // =========== Type & Randori ===========
+        // ===== Type & Randori =====
         public List<string> TrainingTypes { get; }
 
         private string _selectedType = string.Empty;
@@ -95,21 +88,14 @@ namespace Mde.Project.Mobile.ViewModels
                 OnPropertyChanged(nameof(IsRandori));
                 UpdateTechniques();
 
-                // Zorg dat bij Randori minstens 1 opponentregel bestaat
                 if (IsRandori && OpponentNotes.Count == 0)
-                {
                     OpponentNotes.Add(new OpponentNoteModel { JudokaId = 0, Name = string.Empty, Comment = string.Empty });
-                }
-                // Bij switch weg van Randori geen-opponentdata meenemen (functioneel neutraal)
                 if (!IsRandori)
-                {
                     OpponentNotes.Clear();
-                }
             }
         }
 
-        public bool IsRandori =>
-            SelectedType?.Equals("randori", StringComparison.OrdinalIgnoreCase) == true;
+        public bool IsRandori => SelectedType?.Equals("randori", StringComparison.OrdinalIgnoreCase) == true;
 
         private ObservableCollection<TechniqueScoreModel> _techniques = new();
         public ObservableCollection<TechniqueScoreModel> Techniques
@@ -124,33 +110,27 @@ namespace Mde.Project.Mobile.ViewModels
                                    : new ObservableCollection<TechniqueScoreModel>();
         }
 
-        private static ObservableCollection<TechniqueScoreModel> DefaultRandoriTechniques() =>
-            new()
-            {
-                new TechniqueScoreModel { Technique = "Uchi Mata",  ScoreCount = 0 },
-                new TechniqueScoreModel { Technique = "Seoi Nage",  ScoreCount = 0 },
-                new TechniqueScoreModel { Technique = "Uki Goshi",  ScoreCount = 0 }
-            };
+        private static ObservableCollection<TechniqueScoreModel> DefaultRandoriTechniques() => new()
+        {
+            new TechniqueScoreModel { Technique = "Uchi Mata", ScoreCount = 0 },
+            new TechniqueScoreModel { Technique = "Seoi Nage", ScoreCount = 0 },
+            new TechniqueScoreModel { Technique = "Uki Goshi", ScoreCount = 0 }
+        };
 
         private void RefreshTechniques()
         {
             Techniques = new ObservableCollection<TechniqueScoreModel>(Techniques);
         }
 
-        // =========== Busy ===========
+        // ===== Busy =====
         private bool _isBusyFlag;
         public bool IsBusy
         {
             get => _isBusyFlag;
-            set
-            {
-                _isBusyFlag = value;
-                OnPropertyChanged();
-                (SaveCommand as Command)?.ChangeCanExecute();
-            }
+            set { _isBusyFlag = value; OnPropertyChanged(); (SaveCommand as Command)?.ChangeCanExecute(); }
         }
 
-        // ====== Judokas & categorieën ======
+        // ===== Judokas & categorieën =====
         public ObservableCollection<string> Categories { get; }
         private string? _selectedCategory;
         public string? SelectedCategory
@@ -170,36 +150,26 @@ namespace Mde.Project.Mobile.ViewModels
         public JudokaModel? SelectedJudoka
         {
             get => _selectedJudoka;
-            set
-            {
-                _selectedJudoka = value;
-                OnPropertyChanged();
-                (AddOpponentCommand as Command)?.ChangeCanExecute();
-            }
+            set { _selectedJudoka = value; OnPropertyChanged(); (AddOpponentCommand as Command)?.ChangeCanExecute(); }
         }
 
         private string _opponentComment = string.Empty;
         public string OpponentComment
         {
             get => _opponentComment;
-            set
-            {
-                _opponentComment = value;
-                OnPropertyChanged();
-                (AddOpponentCommand as Command)?.ChangeCanExecute();
-            }
+            set { _opponentComment = value; OnPropertyChanged(); (AddOpponentCommand as Command)?.ChangeCanExecute(); }
         }
 
         public ObservableCollection<OpponentNoteModel> OpponentNotes { get; private set; }
 
-        // =========== Commands ===========
+        // ===== Commands =====
         public ICommand SaveCommand { get; }
         public ICommand IncrementCommand { get; }
         public ICommand DecrementCommand { get; }
         public ICommand AddOpponentCommand { get; }
         public ICommand RemoveOpponentCommand { get; }
 
-        // =========== Opponent helpers ===========
+        // ===== Opponent helpers =====
         private void AddOpponentNote()
         {
             if (SelectedJudoka == null) return;
@@ -216,10 +186,7 @@ namespace Mde.Project.Mobile.ViewModels
             (AddOpponentCommand as Command)?.ChangeCanExecute();
         }
 
-        private bool CanAddOpponentNote()
-        {
-            return SelectedJudoka != null && !string.IsNullOrWhiteSpace(OpponentComment);
-        }
+        private bool CanAddOpponentNote() => SelectedJudoka != null && !string.IsNullOrWhiteSpace(OpponentComment);
 
         private void RemoveOpponentNote(OpponentNoteModel? note)
         {
@@ -227,7 +194,7 @@ namespace Mde.Project.Mobile.ViewModels
             OpponentNotes.Remove(note);
         }
 
-        // =========== Opslaan (commit 2: lokaal JSON + EndDate) ===========
+        // ===== Opslaan (commit 3: lokaal JSON + EndDate + Color) =====
         private async Task SaveAsync()
         {
             if (IsBusy) return;
@@ -237,25 +204,22 @@ namespace Mde.Project.Mobile.ViewModels
                 var startDateTime = Date.Date.Add(StartTime);
                 var endDateTime = Date.Date.Add(EndTime);
 
-                // laad huidige lijst
                 var all = await LoadFromLocalAsync() ?? new List<TrainingEntryModel>();
-
-                // Voeg als nieuw item toe (commit 2 heeft nog geen edit-flow)
                 int nextId = (all.Count == 0) ? 1 : all.Max(t => t.Id) + 1;
 
                 var entry = new TrainingEntryModel
                 {
                     Id = nextId,
                     Date = startDateTime,
-                    EndDate = endDateTime,             // <-- commit 2
+                    EndDate = endDateTime,
                     Type = SelectedType,
                     Comment = string.Empty,
                     TechniqueScores = Techniques.ToList(),
                     Attachments = new(),
-                    OpponentNotes = IsRandori ? OpponentNotes.ToList() : new List<OpponentNoteModel>()
+                    OpponentNotes = IsRandori ? OpponentNotes.ToList() : new List<OpponentNoteModel>(),
+                    Color = SelectedColor                        // <<< commit 3
                 };
 
-                // bovenaan toevoegen
                 all.Insert(0, entry);
 
                 await SaveToLocalAsync(all);
@@ -272,10 +236,9 @@ namespace Mde.Project.Mobile.ViewModels
             }
         }
 
-        // =========== Lokale opslag helpers ===========
+        // ===== Lokale opslag =====
         private static string LocalPath()
         {
-            // werkt overal zonder extra dependencies
             var dir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             return Path.Combine(dir, LocalFileName);
         }
@@ -306,13 +269,10 @@ namespace Mde.Project.Mobile.ViewModels
                 Directory.CreateDirectory(dir);
 
             await using var stream = File.Create(path);
-            await JsonSerializer.SerializeAsync(stream, list, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
+            await JsonSerializer.SerializeAsync(stream, list, new JsonSerializerOptions { WriteIndented = true });
         }
 
-        // =========== Boilerplate INotifyPropertyChanged ===========
+        // ===== INotifyPropertyChanged =====
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? name = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
