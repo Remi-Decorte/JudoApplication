@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Windows.Input;
 using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
+using System.IO;
 
 namespace Mde.Project.Mobile.ViewModels
 {
@@ -12,7 +13,6 @@ namespace Mde.Project.Mobile.ViewModels
     {
         private const string LocalFileName = "trainings_local.json";
         private readonly IJudokaService _judokaService;
-        // (No _trainingService here yet, as backend integration comes later)
 
         public AddTrainingViewModel(IJudokaService judokaService)
         {
@@ -20,11 +20,21 @@ namespace Mde.Project.Mobile.ViewModels
 
             Date = DateTime.Today;
             TrainingTypes = new() { "Techniek", "Conditioneel", "Wedstrijdvoorbereiding", "Herstel", "Randori" };
-            SelectedType = TrainingTypes[0];  // default to first option ("Techniek")
+            SelectedType = TrainingTypes[0];  // default: Techniek
 
-            // Techniques list will be set in SelectedType property (Default is not Randori, so empty techniques)
+            // Default tijden (nu afgerond op kwartier, duur 1u; andere dagen: 09:00–10:00)
+            var now = DateTime.Now;
+            if (Date.Date == DateTime.Today)
+            {
+                StartTime = new TimeSpan(now.Hour, (now.Minute / 15) * 15, 0);
+            }
+            else
+            {
+                StartTime = new TimeSpan(9, 0, 0);
+            }
+            EndTime = StartTime.Add(TimeSpan.FromHours(1));
+
             Techniques = new ObservableCollection<TechniqueScoreModel>();
-
             OpponentNotes = new ObservableCollection<OpponentNoteModel>();
             Judokas = new ObservableCollection<JudokaModel>();
             Categories = new ObservableCollection<string>();
@@ -48,7 +58,7 @@ namespace Mde.Project.Mobile.ViewModels
             _ = InitCategoriesAsync();
         }
 
-        // =========== Properties ===========
+        // =========== Datum & Tijd ===========
         private DateTime _date;
         public DateTime Date
         {
@@ -56,6 +66,21 @@ namespace Mde.Project.Mobile.ViewModels
             set { _date = value; OnPropertyChanged(); }
         }
 
+        private TimeSpan _startTime;
+        public TimeSpan StartTime
+        {
+            get => _startTime;
+            set { _startTime = value; OnPropertyChanged(); }
+        }
+
+        private TimeSpan _endTime;
+        public TimeSpan EndTime
+        {
+            get => _endTime;
+            set { _endTime = value; OnPropertyChanged(); }
+        }
+
+        // =========== Type & Randori ===========
         public List<string> TrainingTypes { get; }
 
         private string _selectedType = string.Empty;
@@ -69,6 +94,17 @@ namespace Mde.Project.Mobile.ViewModels
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsRandori));
                 UpdateTechniques();
+
+                // Zorg dat bij Randori minstens 1 opponentregel bestaat
+                if (IsRandori && OpponentNotes.Count == 0)
+                {
+                    OpponentNotes.Add(new OpponentNoteModel { JudokaId = 0, Name = string.Empty, Comment = string.Empty });
+                }
+                // Bij switch weg van Randori geen-opponentdata meenemen (functioneel neutraal)
+                if (!IsRandori)
+                {
+                    OpponentNotes.Clear();
+                }
             }
         }
 
@@ -82,6 +118,26 @@ namespace Mde.Project.Mobile.ViewModels
             set { _techniques = value; OnPropertyChanged(); }
         }
 
+        private void UpdateTechniques()
+        {
+            Techniques = IsRandori ? DefaultRandoriTechniques()
+                                   : new ObservableCollection<TechniqueScoreModel>();
+        }
+
+        private static ObservableCollection<TechniqueScoreModel> DefaultRandoriTechniques() =>
+            new()
+            {
+                new TechniqueScoreModel { Technique = "Uchi Mata",  ScoreCount = 0 },
+                new TechniqueScoreModel { Technique = "Seoi Nage",  ScoreCount = 0 },
+                new TechniqueScoreModel { Technique = "Uki Goshi",  ScoreCount = 0 }
+            };
+
+        private void RefreshTechniques()
+        {
+            Techniques = new ObservableCollection<TechniqueScoreModel>(Techniques);
+        }
+
+        // =========== Busy ===========
         private bool _isBusyFlag;
         public bool IsBusy
         {
@@ -118,7 +174,7 @@ namespace Mde.Project.Mobile.ViewModels
             {
                 _selectedJudoka = value;
                 OnPropertyChanged();
-                ((Command)AddOpponentCommand).ChangeCanExecute();
+                (AddOpponentCommand as Command)?.ChangeCanExecute();
             }
         }
 
@@ -130,7 +186,7 @@ namespace Mde.Project.Mobile.ViewModels
             {
                 _opponentComment = value;
                 OnPropertyChanged();
-                ((Command)AddOpponentCommand).ChangeCanExecute();
+                (AddOpponentCommand as Command)?.ChangeCanExecute();
             }
         }
 
@@ -143,67 +199,124 @@ namespace Mde.Project.Mobile.ViewModels
         public ICommand AddOpponentCommand { get; }
         public ICommand RemoveOpponentCommand { get; }
 
-        // (SaveAsync remains unchanged in this commit - will be updated in later commits)
-
-        // =========== Helpers ===========
-        private void UpdateTechniques()
+        // =========== Opponent helpers ===========
+        private void AddOpponentNote()
         {
-            Techniques = IsRandori ? DefaultRandoriTechniques()
-                                   : new ObservableCollection<TechniqueScoreModel>();
-        }
+            if (SelectedJudoka == null) return;
 
-        private static ObservableCollection<TechniqueScoreModel> DefaultRandoriTechniques() =>
-            new()
+            OpponentNotes.Add(new OpponentNoteModel
             {
-                new TechniqueScoreModel { Technique = "Uchi Mata", ScoreCount = 0 },
-                new TechniqueScoreModel { Technique = "Seoi Nage", ScoreCount = 0 },
-                new TechniqueScoreModel { Technique = "Uki Goshi", ScoreCount = 0 }
-            };
+                JudokaId = SelectedJudoka.Id,
+                Name = SelectedJudoka.FullName,
+                Comment = OpponentComment ?? string.Empty
+            });
 
-        private void RefreshTechniques()
-        {
-            Techniques = new ObservableCollection<TechniqueScoreModel>(Techniques);
+            OpponentComment = string.Empty;
+            OnPropertyChanged(nameof(OpponentComment));
+            (AddOpponentCommand as Command)?.ChangeCanExecute();
         }
 
-        private async Task InitCategoriesAsync()
+        private bool CanAddOpponentNote()
         {
+            return SelectedJudoka != null && !string.IsNullOrWhiteSpace(OpponentComment);
+        }
+
+        private void RemoveOpponentNote(OpponentNoteModel? note)
+        {
+            if (note == null) return;
+            OpponentNotes.Remove(note);
+        }
+
+        // =========== Opslaan (commit 2: lokaal JSON + EndDate) ===========
+        private async Task SaveAsync()
+        {
+            if (IsBusy) return;
+            IsBusy = true;
             try
             {
-                var cats = await _judokaService.GetCategoriesAsync();
-                Categories.Clear();
-                foreach (var c in cats) Categories.Add(c);
-                if (Categories.Count > 0)
-                    SelectedCategory = Categories[0];
-            }
-            catch (Exception ex)
-            {
-                await Application.Current?.MainPage?.DisplayAlert("Judokas", $"Kon categorieën niet laden: {ex.Message}", "OK");
-            }
-        }
+                var startDateTime = Date.Date.Add(StartTime);
+                var endDateTime = Date.Date.Add(EndTime);
 
-        private async Task LoadJudokasByCategoryAsync()
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(SelectedCategory)) return;
-                var list = await _judokaService.GetJudokasByCategoryAsync(SelectedCategory);
-                Judokas.Clear();
-                if (list != null)
+                // laad huidige lijst
+                var all = await LoadFromLocalAsync() ?? new List<TrainingEntryModel>();
+
+                // Voeg als nieuw item toe (commit 2 heeft nog geen edit-flow)
+                int nextId = (all.Count == 0) ? 1 : all.Max(t => t.Id) + 1;
+
+                var entry = new TrainingEntryModel
                 {
-                    foreach (var j in list) Judokas.Add(j);
-                }
+                    Id = nextId,
+                    Date = startDateTime,
+                    EndDate = endDateTime,             // <-- commit 2
+                    Type = SelectedType,
+                    Comment = string.Empty,
+                    TechniqueScores = Techniques.ToList(),
+                    Attachments = new(),
+                    OpponentNotes = IsRandori ? OpponentNotes.ToList() : new List<OpponentNoteModel>()
+                };
+
+                // bovenaan toevoegen
+                all.Insert(0, entry);
+
+                await SaveToLocalAsync(all);
+                await Application.Current!.MainPage!.DisplayAlert("Opgeslagen", "Training bewaard.", "OK");
+                await Application.Current!.MainPage!.Navigation.PopAsync();
             }
             catch (Exception ex)
             {
-                await Application.Current?.MainPage?.DisplayAlert("Judokas", $"Kon judokas niet laden: {ex.Message}", "OK");
+                await Application.Current!.MainPage!.DisplayAlert("Fout", $"Kon training niet opslaan: {ex.Message}", "OK");
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 
-        // (Other members like SaveAsync, AddOpponentNote, etc., remain unchanged in this commit)
+        // =========== Lokale opslag helpers ===========
+        private static string LocalPath()
+        {
+            // werkt overal zonder extra dependencies
+            var dir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            return Path.Combine(dir, LocalFileName);
+        }
 
+        private static async Task<List<TrainingEntryModel>?> LoadFromLocalAsync()
+        {
+            try
+            {
+                var path = LocalPath();
+                if (!File.Exists(path)) return new List<TrainingEntryModel>();
+                using var stream = File.OpenRead(path);
+                return await JsonSerializer.DeserializeAsync<List<TrainingEntryModel>>(stream, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            catch
+            {
+                return new List<TrainingEntryModel>();
+            }
+        }
+
+        private static async Task SaveToLocalAsync(List<TrainingEntryModel> list)
+        {
+            var path = LocalPath();
+            var dir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+
+            await using var stream = File.Create(path);
+            await JsonSerializer.SerializeAsync(stream, list, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+        }
+
+        // =========== Boilerplate INotifyPropertyChanged ===========
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? name = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
         private bool Set<T>(ref T field, T value, [CallerMemberName] string? name = null)
         {
             if (Equals(field, value)) return false;

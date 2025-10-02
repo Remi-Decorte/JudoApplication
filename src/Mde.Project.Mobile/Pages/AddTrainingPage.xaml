@@ -8,10 +8,24 @@
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="16" BackgroundColor="LightGray">
 
-            <!-- Datum -->
+            <!-- Datum & Tijd -->
             <VerticalStackLayout BackgroundColor="White" Padding="12" Spacing="6">
-                <Label Text="Datum" FontAttributes="Bold"/>
-                <DatePicker Date="{Binding Date}"/>
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                    <VerticalStackLayout>
+                        <Label Text="Datum" FontAttributes="Bold"/>
+                        <DatePicker Date="{Binding Date}"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Column="1">
+                        <Label Text="Start" FontAttributes="Bold"/>
+                        <TimePicker Time="{Binding StartTime}"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Column="2">
+                        <Label Text="Einde" FontAttributes="Bold"/>
+                        <TimePicker Time="{Binding EndTime}"/>
+                    </VerticalStackLayout>
+                </Grid>
             </VerticalStackLayout>
 
             <!-- Type -->
@@ -47,7 +61,6 @@
                     BackgroundColor="#FBBF24"
                     TextColor="Black"
                     FontAttributes="Bold"/>
-
             <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
 
         </VerticalStackLayout>
