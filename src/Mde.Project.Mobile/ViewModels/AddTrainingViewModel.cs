@@ -16,7 +16,7 @@ namespace Mde.Project.Mobile.ViewModels
         private const string LocalFileName = "trainings_local.json";
         private readonly IJudokaService _judokaService;
 
-        // ==== Herhaling (commit 4) ====
+        // ==== Herhaling ====
         public List<string> RecurrenceOptions { get; } =
             new() { "Geen", "Dagelijks", "Wekelijks", "Specifieke dagen" };
 
@@ -64,20 +64,17 @@ namespace Mde.Project.Mobile.ViewModels
 
             Techniques = new ObservableCollection<TechniqueScoreModel>();
             OpponentNotes = new ObservableCollection<OpponentNoteModel>();
-            Judokas = new ObservableCollection<JudokaModel>();
+
+            // Enkele, juiste declaraties:
             Categories = new ObservableCollection<string>();
+            Judokas = new ObservableCollection<JudokaModel>();
+
+            // Standaard bij randori: 1 item
+            RandoriCount = 1;
 
             SaveCommand = new Command(async () => await SaveAsync(), () => !IsBusy);
-            IncrementCommand = new Command<TechniqueScoreModel>(t =>
-            {
-                if (t == null) return;
-                t.ScoreCount++; RefreshTechniques();
-            });
-            DecrementCommand = new Command<TechniqueScoreModel>(t =>
-            {
-                if (t == null) return;
-                if (t.ScoreCount > 0) t.ScoreCount--; RefreshTechniques();
-            });
+            IncrementCommand = new Command<TechniqueScoreModel>(t => { if (t == null) return; t.ScoreCount++; RefreshTechniques(); });
+            DecrementCommand = new Command<TechniqueScoreModel>(t => { if (t == null) return; if (t.ScoreCount > 0) t.ScoreCount--; RefreshTechniques(); });
             AddOpponentCommand = new Command(AddOpponentNote, CanAddOpponentNote);
             RemoveOpponentCommand = new Command<OpponentNoteModel>(RemoveOpponentNote);
 
@@ -94,7 +91,7 @@ namespace Mde.Project.Mobile.ViewModels
         private TimeSpan _endTime;
         public TimeSpan EndTime { get => _endTime; set { _endTime = value; OnPropertyChanged(); } }
 
-        // ===== Kleur (commit 3) =====
+        // ===== Kleur =====
         private string _selectedColor = "#1976D2";
         public string SelectedColor { get => _selectedColor; set { _selectedColor = value; OnPropertyChanged(); } }
 
@@ -113,14 +110,44 @@ namespace Mde.Project.Mobile.ViewModels
                 OnPropertyChanged(nameof(IsRandori));
                 UpdateTechniques();
 
-                if (IsRandori && OpponentNotes.Count == 0)
-                    OpponentNotes.Add(new OpponentNoteModel { JudokaId = 0, Name = string.Empty, Comment = string.Empty });
-                if (!IsRandori)
+                if (IsRandori)
+                {
+                    if (RandoriCount < 1) RandoriCount = 1;
+                    EnsureOpponentNotesCount(RandoriCount);
+                }
+                else
+                {
                     OpponentNotes.Clear();
+                    RandoriCount = 0;
+                }
             }
         }
 
         public bool IsRandori => SelectedType?.Equals("randori", StringComparison.OrdinalIgnoreCase) == true;
+
+        // RandoriCount
+        private int _randoriCount;
+        public int RandoriCount
+        {
+            get => _randoriCount;
+            set
+            {
+                var clamped = Math.Clamp(value, 0, 20);
+                if (_randoriCount == clamped) return;
+                _randoriCount = clamped;
+                OnPropertyChanged();
+                if (IsRandori) EnsureOpponentNotesCount(_randoriCount);
+            }
+        }
+
+        private void EnsureOpponentNotesCount(int count)
+        {
+            if (count < 0) count = 0;
+            while (OpponentNotes.Count < count)
+                OpponentNotes.Add(new OpponentNoteModel { JudokaId = 0, Name = string.Empty, Comment = string.Empty });
+            while (OpponentNotes.Count > count)
+                OpponentNotes.RemoveAt(OpponentNotes.Count - 1);
+        }
 
         private ObservableCollection<TechniqueScoreModel> _techniques = new();
         public ObservableCollection<TechniqueScoreModel> Techniques
@@ -142,10 +169,8 @@ namespace Mde.Project.Mobile.ViewModels
             new TechniqueScoreModel { Technique = "Uki Goshi", ScoreCount = 0 }
         };
 
-        private void RefreshTechniques()
-        {
+        private void RefreshTechniques() =>
             Techniques = new ObservableCollection<TechniqueScoreModel>(Techniques);
-        }
 
         // ===== Busy =====
         private bool _isBusyFlag;
@@ -198,28 +223,29 @@ namespace Mde.Project.Mobile.ViewModels
         private void AddOpponentNote()
         {
             if (SelectedJudoka == null) return;
-
             OpponentNotes.Add(new OpponentNoteModel
             {
                 JudokaId = SelectedJudoka.Id,
                 Name = SelectedJudoka.FullName,
                 Comment = OpponentComment ?? string.Empty
             });
-
             OpponentComment = string.Empty;
             OnPropertyChanged(nameof(OpponentComment));
             (AddOpponentCommand as Command)?.ChangeCanExecute();
+            RandoriCount = OpponentNotes.Count; // UI sync
         }
 
-        private bool CanAddOpponentNote() => SelectedJudoka != null && !string.IsNullOrWhiteSpace(OpponentComment);
+        private bool CanAddOpponentNote() =>
+            SelectedJudoka != null && !string.IsNullOrWhiteSpace(OpponentComment);
 
         private void RemoveOpponentNote(OpponentNoteModel? note)
         {
             if (note == null) return;
             OpponentNotes.Remove(note);
+            RandoriCount = OpponentNotes.Count; // UI sync
         }
 
-        // ===== Opslaan (commit 4: inclusief herhaling) =====
+        // ===== Opslaan (incl. herhaling) =====
         private async Task SaveAsync()
         {
             if (IsBusy) return;
@@ -229,14 +255,12 @@ namespace Mde.Project.Mobile.ViewModels
             {
                 var startDateTime = Date.Date.Add(StartTime);
                 var endDateTime = Date.Date.Add(EndTime);
-                if (endDateTime <= startDateTime)
-                    endDateTime = startDateTime.AddHours(1);
+                if (endDateTime <= startDateTime) endDateTime = startDateTime.AddHours(1);
 
                 var all = await LoadFromLocalAsync() ?? new List<TrainingEntryModel>();
                 int nextId = (all.Count == 0) ? 1 : all.Max(t => t.Id) + 1;
 
-                // helper to add one entry
-                void AddOne(DateTime s, DateTime e, bool copyRandoriDetails)
+                void AddOne(DateTime s, DateTime e, bool copyRandori)
                 {
                     var entry = new TrainingEntryModel
                     {
@@ -245,46 +269,38 @@ namespace Mde.Project.Mobile.ViewModels
                         EndDate = e,
                         Type = SelectedType,
                         Comment = string.Empty,
-                        TechniqueScores = copyRandoriDetails
-                            ? Techniques.ToList()
-                            : (IsRandori ? new List<TechniqueScoreModel>() : Techniques.ToList()),
+                        TechniqueScores = copyRandori ? Techniques.ToList()
+                                                      : (IsRandori ? new List<TechniqueScoreModel>() : Techniques.ToList()),
                         Attachments = new(),
-                        OpponentNotes = copyRandoriDetails && IsRandori
-                            ? OpponentNotes.ToList()
-                            : new List<OpponentNoteModel>(),
+                        OpponentNotes = (copyRandori && IsRandori) ? OpponentNotes.ToList()
+                                                                   : new List<OpponentNoteModel>(),
                         Color = SelectedColor
                     };
                     all.Insert(0, entry);
                 }
 
-                // 1) primaire entry (kopieer randori details)
-                AddOne(startDateTime, endDateTime, copyRandoriDetails: true);
+                // Primair item
+                AddOne(startDateTime, endDateTime, copyRandori: true);
 
-                // 2) gegenereerde entries (30 dagen vooruit)
+                // Reeks (30 dagen vooruit)
                 if (!string.Equals(SelectedRecurrence, "Geen", StringComparison.OrdinalIgnoreCase))
                 {
-                    var repeatDays = BuildRepeatDaysArray(SelectedRecurrence,
-                                                          startDateTime.DayOfWeek,
-                                                          MondaySelected, TuesdaySelected, WednesdaySelected,
-                                                          ThursdaySelected, FridaySelected, SaturdaySelected, SundaySelected);
+                    var repeatDays = BuildRepeatDaysArray(SelectedRecurrence, startDateTime.DayOfWeek,
+                        MondaySelected, TuesdaySelected, WednesdaySelected, ThursdaySelected, FridaySelected, SaturdaySelected, SundaySelected);
 
                     var duration = endDateTime - startDateTime;
                     for (int i = 1; i <= 30; i++)
                     {
                         var d = startDateTime.Date.AddDays(i);
-                        int idx = DayOfWeekToIndex(d.DayOfWeek);
-                        if (!repeatDays[idx]) continue;
+                        if (!repeatDays[DayOfWeekToIndex(d.DayOfWeek)]) continue;
 
                         var s = d + startDateTime.TimeOfDay;
                         var e = s + duration;
-
-                        // voor herhalingen: **geen** randori-opponent details kopiëren
-                        AddOne(s, e, copyRandoriDetails: false);
+                        AddOne(s, e, copyRandori: false); // geen opponent-copy voor toekomstige dagen
                     }
                 }
 
                 await SaveToLocalAsync(all);
-
                 await Application.Current!.MainPage!.DisplayAlert("Opgeslagen", "Training bewaard.", "OK");
                 await Application.Current!.MainPage!.Navigation.PopAsync();
             }
@@ -298,12 +314,10 @@ namespace Mde.Project.Mobile.ViewModels
             }
         }
 
-        private static bool[] BuildRepeatDaysArray(
-            string recurrence, DayOfWeek startDay,
+        private static bool[] BuildRepeatDaysArray(string recurrence, DayOfWeek startDay,
             bool mon, bool tue, bool wed, bool thu, bool fri, bool sat, bool sun)
         {
-            var days = new bool[7]; // 0=Ma .. 6=Zo
-
+            var days = new bool[7];
             if (string.Equals(recurrence, "Dagelijks", StringComparison.OrdinalIgnoreCase))
             {
                 for (int i = 0; i < 7; i++) days[i] = true;
@@ -317,7 +331,6 @@ namespace Mde.Project.Mobile.ViewModels
                 days[0] = mon; days[1] = tue; days[2] = wed; days[3] = thu;
                 days[4] = fri; days[5] = sat; days[6] = sun;
             }
-
             return days;
         }
 

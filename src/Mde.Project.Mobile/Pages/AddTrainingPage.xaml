@@ -34,27 +34,35 @@
                 <Picker ItemsSource="{Binding TrainingTypes}" SelectedItem="{Binding SelectedType}"/>
             </VerticalStackLayout>
 
-            <!-- Technieken (alleen bij randori zichtbaar) -->
-            <VerticalStackLayout IsVisible="{Binding IsRandori}" BackgroundColor="White" Padding="12" Spacing="8">
-                <Label Text="Technieken and scores" FontAttributes="Bold"/>
-                <CollectionView ItemsSource="{Binding Techniques}">
+            <!-- Randori: count + spelers + comment -->
+            <VerticalStackLayout IsVisible="{Binding IsRandori}" BackgroundColor="White" Padding="12" Spacing="6">
+                <Label Text="Randori details" FontAttributes="Bold" />
+                <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
+                    <Label Text="Aantal randori's:" VerticalOptions="Center" />
+                    <Label Text="{Binding RandoriCount}" FontAttributes="Bold" VerticalOptions="Center" />
+                    <Stepper Minimum="1" Maximum="20" Increment="1" Value="{Binding RandoriCount}" />
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
+                    <Label Text="Categorie:" VerticalOptions="Center" />
+                    <Picker ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" />
+                </HorizontalStackLayout>
+
+                <CollectionView ItemsSource="{Binding OpponentNotes}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" Padding="4">
-                                <Label Text="{Binding Technique}" VerticalOptions="Center"/>
-                                <Button Grid.Column="1" Text="-"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DecrementCommand}"
-                                        CommandParameter="{Binding .}" />
-                                <Label Grid.Column="2" Text="{Binding ScoreCount}" VerticalOptions="Center" HorizontalTextAlignment="Center" />
-                                <Button Grid.Column="3" Text="+"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.IncrementCommand}"
-                                        CommandParameter="{Binding .}" />
+                            <Grid ColumnDefinitions="*,2*" Padding="4">
+                                <Picker
+                                    ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.Judokas}"
+                                    ItemDisplayBinding="{Binding FullName}"
+                                    SelectedIndexChanged="OnOpponentSelected" />
+                                <Entry Grid.Column="1" Text="{Binding Comment}" Placeholder="Commentaar" />
                             </Grid>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
             </VerticalStackLayout>
 
+            <!-- Kleur -->
             <VerticalStackLayout BackgroundColor="White" Padding="12" Spacing="8">
                 <Label Text="Kleur" FontAttributes="Bold" />
                 <HorizontalStackLayout Spacing="12">
@@ -66,6 +74,7 @@
                 </HorizontalStackLayout>
             </VerticalStackLayout>
 
+            <!-- Herhaling -->
             <VerticalStackLayout BackgroundColor="White" Padding="12" Spacing="6">
                 <Label Text="Herhaling" FontAttributes="Bold" />
                 <Picker Title="Geen herhaling" ItemsSource="{Binding RecurrenceOptions}" SelectedItem="{Binding SelectedRecurrence}" />

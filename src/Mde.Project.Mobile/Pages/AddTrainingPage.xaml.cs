@@ -1,6 +1,7 @@
 using System.Globalization;
 using Microsoft.Maui.Controls;
 using Mde.Project.Mobile.ViewModels;
+using Mde.Project.Mobile.Models;
 
 namespace Mde.Project.Mobile.Pages
 {
@@ -35,6 +36,7 @@ namespace Mde.Project.Mobile.Pages
 
             }
         }
+
         private void OnColorButtonClicked(object sender, EventArgs e)
         {
             if (BindingContext is AddTrainingViewModel vm)
@@ -46,6 +48,17 @@ namespace Mde.Project.Mobile.Pages
                 int b = (int)(col.Blue * 255);
                 vm.SelectedColor = $"#{r:X2}{g:X2}{b:X2}";
             }
+        }
+
+        private void OnOpponentSelected(object sender, EventArgs e)
+        {
+            if (BindingContext is not AddTrainingViewModel vm) return;
+            if (sender is not Picker picker) return;
+            if (picker.SelectedItem is not JudokaModel judoka) return;
+            if (picker.BindingContext is not OpponentNoteModel note) return;
+
+            note.JudokaId = judoka.Id;
+            note.Name = judoka.FullName;
         }
     }
 }
