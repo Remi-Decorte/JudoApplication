@@ -1,288 +1,207 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Input;
-using CommunityToolkit.Maui.Media;
+using Microsoft.Maui.Graphics;
 using Mde.Project.Mobile.Interfaces;
 using Mde.Project.Mobile.Models;
-using Microsoft.Maui;
-using Microsoft.Maui.Media;    // ✅ voor MediaPicker
-using Microsoft.Maui.Storage;  // ✅ voor FileSystem
+using Syncfusion.Maui.Scheduler;
 
 namespace Mde.Project.Mobile.ViewModels
 {
     public class AgendaViewModel : INotifyPropertyChanged
     {
         private readonly ITrainingService _trainingService;
-        private readonly IJudokaService _judokaService;
-        private const string LocalFileName = "trainings_local.json";
 
-        private readonly ISpeechToText _speech = SpeechToText.Default;
-        private CancellationTokenSource? _sttCts;
-
-        public AgendaViewModel(ITrainingService trainingService, IJudokaService judokaService)
+        public AgendaViewModel(ITrainingService trainingService)
         {
             _trainingService = trainingService;
-            _judokaService = judokaService;
 
-            StartDictationCommand = new Command(async () => await StartDictationAsync(), () => !IsListening);
-            StopDictationCommand = new Command(() => _sttCts?.Cancel(), () => IsListening);
-            SaveCommentCommand = new Command(async () => await SaveCommentAsync(), CanSaveComment);
-            QuickShotCommand = new Command(async () => await QuickShotAsync());
-            SelectTrainingCommand = new Command<TrainingEntryModel?>(t =>
+            var today = DateTime.Today;
+            DisplayDate = today;
+            SelectedDate = today;
+
+            _selectedViewMode = "Maand";
+            SchedulerView = SchedulerView.Month;
+
+            Appointments = new ObservableCollection<TrainingAppointment>();
+
+            PreviousPeriodCommand = new Command(() =>
             {
-                if (t == null) return;
-                SelectedTraining = t;
+                DisplayDate = IsWeekView ? DisplayDate.AddDays(-7) : DisplayDate.AddMonths(-1);
+                OnPropertyChanged(nameof(CurrentPeriodTitle));
             });
 
-            // ✅ nieuw: property bestaat nu ook
-            EditTrainingCommand = new Command(async () => await EditTrainingAsync(), () => SelectedTraining != null);
+            NextPeriodCommand = new Command(() =>
+            {
+                DisplayDate = IsWeekView ? DisplayDate.AddDays(7) : DisplayDate.AddMonths(1);
+                OnPropertyChanged(nameof(CurrentPeriodTitle));
+            });
+
+            GoToTodayCommand = new Command(() =>
+            {
+                var t = DateTime.Today;
+                DisplayDate = t;
+                SelectedDate = t;
+                OnPropertyChanged(nameof(CurrentPeriodTitle));
+            });
+
+            NewEntryCommand = new Command(async () =>
+            {
+                await Shell.Current.GoToAsync(nameof(Pages.AddTrainingPage));
+            });
         }
 
-        // ====== Collections & state ======
-        public ObservableCollection<TrainingEntryModel> Trainings { get; } = new();
+        public ObservableCollection<TrainingAppointment> Appointments { get; }
 
-        private bool _isBusy;
-        public bool IsBusy { get => _isBusy; set { _isBusy = value; OnPropertyChanged(); } }
+        private DateTime _displayDate;
+        public DateTime DisplayDate { get => _displayDate; set => Set(ref _displayDate, value); }
 
-        private bool _isListening;
-        public bool IsListening
+        private DateTime? _selectedDate;
+        public DateTime? SelectedDate { get => _selectedDate; set => Set(ref _selectedDate, value); }
+
+        private SchedulerView _schedulerView;
+        public SchedulerView SchedulerView { get => _schedulerView; set => Set(ref _schedulerView, value); }
+
+        public IList<string> ViewModes { get; } = new[] { "Maand", "Week" };
+
+        private string _selectedViewMode;
+        public string SelectedViewMode
         {
-            get => _isListening;
+            get => _selectedViewMode;
             set
             {
-                _isListening = value;
-                OnPropertyChanged();
-                ((Command)StartDictationCommand).ChangeCanExecute();
-                ((Command)StopDictationCommand).ChangeCanExecute();
-            }
-        }
-
-        public async Task LoadTrainingsAsync()
-        {
-            if (IsBusy) return;
-            IsBusy = true;
-
-            try
-            {
-                var local = await LoadFromLocalAsync();
-                if (local == null || local.Count == 0)
+                if (Set(ref _selectedViewMode, value))
                 {
-                    var fromService = await _trainingService.GetUserTrainingEntriesAsync();
-                    local = fromService?.ToList() ?? new System.Collections.Generic.List<TrainingEntryModel>();
-                    await SaveToLocalAsync(local);
+                    if (string.Equals(value, "Week", StringComparison.OrdinalIgnoreCase))
+                    {
+                        SchedulerView = SchedulerView.Week;
+                        IsWeekView = true;
+                    }
+                    else
+                    {
+                        SchedulerView = SchedulerView.Month;
+                        IsWeekView = false;
+                    }
+                    OnPropertyChanged(nameof(CurrentPeriodTitle));
                 }
-
-                Trainings.Clear();
-                foreach (var entry in local)
-                    Trainings.Add(entry);
-            }
-            finally
-            {
-                IsBusy = false;
             }
         }
 
-        // ====== Comment flow ======
-        private string _newComment = string.Empty;
-        public string NewComment
+        private bool _isWeekView;
+        public bool IsWeekView { get => _isWeekView; set => Set(ref _isWeekView, value); }
+
+        public string CurrentPeriodTitle =>
+            IsWeekView ? WeekRangeText(DisplayDate)
+                       : DisplayDate.ToString("MMMM yyyy", CultureInfo.CurrentCulture);
+
+        public ICommand PreviousPeriodCommand { get; }
+        public ICommand NextPeriodCommand { get; }
+        public ICommand GoToTodayCommand { get; }
+        public ICommand NewEntryCommand { get; }
+
+        // === Laden uit backend ===
+        public async Task LoadAsync()
         {
-            get => _newComment;
-            set
+            var list = await _trainingService.GetUserTrainingEntriesAsync();
+            Appointments.Clear();
+            if (list == null) return;
+
+            foreach (var t in list.OrderBy(x => x.Date))
             {
-                _newComment = value;
-                OnPropertyChanged();
-                ((Command)SaveCommentCommand).ChangeCanExecute();
-            }
-        }
-
-        private TrainingEntryModel? _selectedTraining;
-        public TrainingEntryModel? SelectedTraining
-        {
-            get => _selectedTraining;
-            set
-            {
-                _selectedTraining = value;
-                NewComment = _selectedTraining?.Comment ?? string.Empty;
-                OnPropertyChanged();
-                ((Command)SaveCommentCommand).ChangeCanExecute();
-                ((Command)EditTrainingCommand).ChangeCanExecute();   // ✅ enable/disable “Bewerk” knop
-            }
-        }
-
-        public ICommand StartDictationCommand { get; }
-        public ICommand StopDictationCommand { get; }
-        public ICommand SaveCommentCommand { get; }
-        public ICommand QuickShotCommand { get; }
-        public ICommand SelectTrainingCommand { get; }
-        public ICommand EditTrainingCommand { get; }   // ✅ ontbrekende property toegevoegd
-
-        private bool CanSaveComment() =>
-            SelectedTraining != null && !string.IsNullOrWhiteSpace(NewComment);
-
-        private async Task SaveCommentAsync()
-        {
-            if (!CanSaveComment()) return;
-
-            SelectedTraining!.Comment = NewComment.Trim();
-            OnPropertyChanged(nameof(SelectedTraining));
-            await SaveToLocalAsync(Trainings.ToList());
-
-            await Application.Current?.MainPage?.DisplayAlert("Opgeslagen",
-                "Je comment is bewaard en blijft beschikbaar bij volgende opstart.", "OK");
-        }
-
-        private async Task QuickShotAsync()
-        {
-            try
-            {
-                if (SelectedTraining == null)
+                var color = string.IsNullOrWhiteSpace(t.Color)
+                            ? ColorForType(t.Type)
+                            : Color.FromArgb(t.Color);
+                Appointments.Add(new TrainingAppointment
                 {
-                    await Application.Current?.MainPage?.DisplayAlert("Geen training geselecteerd",
-                        "Selecteer eerst een training in de lijst om er een foto aan toe te voegen.", "OK");
-                    return;
-                }
-
-                if (!MediaPicker.Default.IsCaptureSupported)
-                {
-                    await Application.Current?.MainPage?.DisplayAlert("Camera",
-                        "Foto nemen wordt niet ondersteund op dit toestel.", "OK");
-                    return;
-                }
-
-                FileResult? result = await MediaPicker.CapturePhotoAsync();
-                if (result == null) return;
-
-                using Stream source = await result.OpenReadAsync();
-                string fileName = $"training_{SelectedTraining.Id}_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
-                string destPath = Path.Combine(FileSystem.AppDataDirectory, fileName);
-
-                using FileStream dest = File.OpenWrite(destPath);
-                await source.CopyToAsync(dest);
-                await dest.FlushAsync();
-
-                SelectedTraining.Attachments ??= new System.Collections.Generic.List<TrainingAttachmentModel>();
-                SelectedTraining.Attachments.Add(new TrainingAttachmentModel
-                {
-                    Type = "photo",
-                    Uri = destPath,
-                    FileName = Path.GetFileName(destPath)
+                    Training = t,
+                    Subject = string.IsNullOrWhiteSpace(t.Type) ? "Training" : t.Type,
+                    StartTime = t.Date,
+                    EndTime = (t.EndDate > t.Date) ? t.EndDate : t.Date.AddHours(1), // use actual end if available
+                    Background = new SolidColorBrush(color)
                 });
-
-                OnPropertyChanged(nameof(SelectedTraining));
-                await SaveToLocalAsync(Trainings.ToList());
-
-                await Application.Current?.MainPage?.DisplayAlert("Foto toegevoegd",
-                    "De foto is lokaal opgeslagen en aan de training gekoppeld.", "OK");
-            }
-            catch (Exception ex)
-            {
-                await Application.Current?.MainPage?.DisplayAlert("Foto", $"Kon geen foto opslaan: {ex.Message}", "OK");
             }
         }
 
-        private string LocalPath => Path.Combine(FileSystem.AppDataDirectory, LocalFileName);
-
-        private async Task SaveToLocalAsync(System.Collections.Generic.List<TrainingEntryModel> list)
+        // === Nieuw aanmaken ===
+        public async Task CreateAndAddTrainingAsync(DateTime start, DateTime end, string type, Color color)
         {
-            var json = JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = false });
-            await File.WriteAllTextAsync(LocalPath, json);
+            var dto = new TrainingEntryModel
+            {
+                Type = type,
+                Date = start,
+                Comment = string.Empty,
+                TechniqueScores = new(),
+            };
+            var saved = await _trainingService.CreateTrainingEntryAsync(dto);
+
+            Appointments.Add(new TrainingAppointment
+            {
+                Training = saved ?? dto,
+                Subject = type,
+                StartTime = start,
+                EndTime = end,
+                Background = new SolidColorBrush(color)
+            });
         }
 
-        private async Task<System.Collections.Generic.List<TrainingEntryModel>?> LoadFromLocalAsync()
+        // === Bewerken ===
+        public async Task UpdateTrainingAsync(TrainingAppointment appt, DateTime start, DateTime end, string type, Color color)
         {
-            try
-            {
-                if (!File.Exists(LocalPath)) return null;
-                var json = await File.ReadAllTextAsync(LocalPath);
-                return JsonSerializer.Deserialize<System.Collections.Generic.List<TrainingEntryModel>>(json);
-            }
-            catch { return null; }
+            if (appt?.Training == null) return;
+
+            appt.Training.Type = type;
+            appt.Training.Date = start;
+
+            await _trainingService.UpdateTrainingEntryAsync(appt.Training);
+
+            appt.Subject = type;
+            appt.StartTime = start;
+            appt.EndTime = end;
+            appt.Background = new SolidColorBrush(color);
+
+            OnPropertyChanged(nameof(Appointments)); // force refresh
         }
 
-        // ====== STT ======
-        private async Task StartDictationAsync()
+        // === Verwijderen ===
+        public async Task DeleteTrainingAsync(TrainingAppointment appt)
         {
-            try
-            {
-                if (IsListening) return;
+            if (appt?.Training == null) return;
 
-                bool granted = await _speech.RequestPermissions();
-                if (!granted)
-                {
-                    await Application.Current?.MainPage?.DisplayAlert("Microfoon", "Toestemming geweigerd.", "OK");
-                    return;
-                }
-
-                _sttCts?.Cancel();
-                _sttCts?.Dispose();
-                _sttCts = new CancellationTokenSource();
-                IsListening = true;
-
-                try
-                {
-                    var result = await _speech.ListenAsync(
-                        culture: CultureInfo.CurrentCulture,
-                        recognitionResult: new Progress<string?>(OnSpeechRecognitionUpdate),
-                        cancellationToken: _sttCts.Token);
-
-                    if (!string.IsNullOrWhiteSpace(result.Text))
-                        NewComment = result.Text.Trim();
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception ex)
-                {
-                    await Application.Current?.MainPage?.DisplayAlert("Fout bij het inspreken", $"Onverwachte fout: {ex.Message}", "OK");
-                }
-            }
-            catch (Exception ex)
-            {
-                await Application.Current?.MainPage?.DisplayAlert("Fout", $"Onverwachte fout: {ex.Message}", "OK");
-            }
-            finally
-            {
-                IsListening = false;
-                _sttCts?.Dispose();
-                _sttCts = null;
-            }
+            await _trainingService.DeleteTrainingEntryAsync(appt.Training.Id);
+            Appointments.Remove(appt);
         }
 
-        private void OnSpeechRecognitionUpdate(string? partialResult)
-        {
-            if (MainThread.IsMainThread) UpdatePartialText(partialResult);
-            else MainThread.BeginInvokeOnMainThread(() => UpdatePartialText(partialResult));
-        }
-
-        private void UpdatePartialText(string? partialResult)
-        {
-            if (!string.IsNullOrWhiteSpace(partialResult))
-                NewComment = partialResult.Trim();
-        }
-
-        private async Task EditTrainingAsync()
-        {
-            if (SelectedTraining == null)
+        private static Color ColorForType(string? type) =>
+            (type ?? string.Empty).Trim().ToLowerInvariant() switch
             {
-                await Application.Current?.MainPage?.DisplayAlert("Geen selectie", "Kies eerst een training om te bewerken.", "OK");
-                return;
-            }
+                "techniek" => Color.FromArgb("#1976D2"),
+                "conditioneel" => Color.FromArgb("#2E7D32"),
+                "wedstrijdvoorbereiding" => Color.FromArgb("#F57C00"),
+                "herstel" => Color.FromArgb("#8E24AA"),
+                "randori" => Color.FromArgb("#D32F2F"),
+                _ => Color.FromArgb("#1976D2")
+            };
 
-            await Application.Current?.MainPage?.Navigation.PushAsync(
-                new Pages.AddTrainingPage(
-                    new AddTrainingViewModel(_judokaService, SelectedTraining)
-                )
-            );
+        private static string WeekRangeText(DateTime anchor)
+        {
+            int diff = (7 + (anchor.DayOfWeek - DayOfWeek.Monday)) % 7;
+            var start = anchor.AddDays(-diff).Date;
+            var end = start.AddDays(6);
+            return $"{start:d MMM} – {end:d MMM yyyy}";
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        private void OnPropertyChanged([CallerMemberName] string? name = null) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        private void OnPropertyChanged([CallerMemberName] string? name = null)
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        private bool Set<T>(ref T field, T value, [CallerMemberName] string? name = null)
+        {
+            if (Equals(field, value)) return false;
+            field = value;
+            OnPropertyChanged(name);
+            return true;
+        }
     }
 }

@@ -56,42 +56,51 @@ namespace Mde.Project.Mobile.ViewModels
         private async Task RegisterAsync()
         {
             if (IsBusy) return;
-            IsBusy = true;
-            ErrorMessage = string.Empty;
+            IsBusy = true; ErrorMessage = string.Empty;
 
             try
             {
+                bool Strong(string p) =>
+                    p?.Length >= 6 && p.Any(char.IsUpper) && p.Any(char.IsLower) && p.Any(char.IsDigit);
+                if (!Strong(Password))
+                {
+                    ErrorMessage = "Kies een sterker wachtwoord (min. 6 tekens, hoofdletter, kleine letter en cijfer).";
+                    return;
+                }
+
                 var registerModel = new RegisterModel
                 {
-                    Username = Username,
-                    Email = Email,
+                    Username = Username?.Trim() ?? "",
+                    Email = Email?.Trim() ?? "",
                     Password = Password,
-                    FirstName = string.Empty,
-                    LastName = string.Empty
+                    FirstName = Username?.Trim() ?? "User",
+                    LastName = "-"
                 };
 
-                var jwtResponse = await _authService.RegisterAsync(registerModel);
-
-                if (jwtResponse != null && !string.IsNullOrWhiteSpace(jwtResponse.Token))
+                var jwt = await _authService.RegisterAsync(registerModel);
+                if (jwt != null && !string.IsNullOrWhiteSpace(jwt.Token))
                 {
-                    // Store the JWT token securely
-                    await SecureStorage.SetAsync("jwt_token", jwtResponse.Token);
-                    // Navigate to the home page
-                    await Shell.Current.GoToAsync("//home");
+                    // GEEN token opslaan als je naar login wilt
+                    // await SecureStorage.SetAsync("jwt_token", jwt.Token);
+
+                    await Application.Current.MainPage.DisplayAlert(
+                        "Account aangemaakt", "Log nu in met je nieuwe account.", "OK");
+
+                    // leeg velden (optioneel)
+                    Username = Email = Password = string.Empty;
+
+                    await Shell.Current.GoToAsync("//login");
                 }
                 else
                 {
-                    ErrorMessage = "Registratie mislukt. Controleer je gegevens.";
+                    ErrorMessage = "Registratie mislukt.";
                 }
             }
             catch (Exception ex)
             {
                 ErrorMessage = $"Fout bij registreren: {ex.Message}";
             }
-            finally
-            {
-                IsBusy = false;
-            }
+            finally { IsBusy = false; }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

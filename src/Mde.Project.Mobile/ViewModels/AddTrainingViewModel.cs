@@ -1,5 +1,8 @@
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Windows.Input;
@@ -12,70 +15,92 @@ namespace Mde.Project.Mobile.ViewModels
     {
         private const string LocalFileName = "trainings_local.json";
         private readonly IJudokaService _judokaService;
-        private int? _editingId = null;
-        private bool _isBusy;
+
+        // ==== Herhaling ====
+        public List<string> RecurrenceOptions { get; } =
+            new() { "Geen", "Dagelijks", "Wekelijks", "Specifieke dagen" };
+
+        private string _selectedRecurrence = "Geen";
+        public string SelectedRecurrence
+        {
+            get => _selectedRecurrence;
+            set
+            {
+                if (_selectedRecurrence == value) return;
+                _selectedRecurrence = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsCustomRecurrence));
+            }
+        }
+
+        public bool IsCustomRecurrence =>
+            SelectedRecurrence.Equals("Specifieke dagen", StringComparison.OrdinalIgnoreCase);
+
+        public bool MondaySelected { get => _mondaySelected; set { _mondaySelected = value; OnPropertyChanged(); } }
+        public bool TuesdaySelected { get => _tuesdaySelected; set { _tuesdaySelected = value; OnPropertyChanged(); } }
+        public bool WednesdaySelected { get => _wednesdaySelected; set { _wednesdaySelected = value; OnPropertyChanged(); } }
+        public bool ThursdaySelected { get => _thursdaySelected; set { _thursdaySelected = value; OnPropertyChanged(); } }
+        public bool FridaySelected { get => _fridaySelected; set { _fridaySelected = value; OnPropertyChanged(); } }
+        public bool SaturdaySelected { get => _saturdaySelected; set { _saturdaySelected = value; OnPropertyChanged(); } }
+        public bool SundaySelected { get => _sundaySelected; set { _sundaySelected = value; OnPropertyChanged(); } }
+
+        private bool _mondaySelected, _tuesdaySelected, _wednesdaySelected, _thursdaySelected, _fridaySelected, _saturdaySelected, _sundaySelected;
 
         public AddTrainingViewModel(IJudokaService judokaService)
         {
             _judokaService = judokaService;
 
             Date = DateTime.Today;
-            TrainingTypes = new() { "randori", "kracht", "techniek" };
-            _selectedType = TrainingTypes[0];
+            TrainingTypes = new() { "Techniek", "Conditioneel", "Wedstrijdvoorbereiding", "Herstel", "Randori" };
 
-            Techniques = DefaultRandoriTechniques();
+            var now = DateTime.Now;
+            StartTime = (Date.Date == DateTime.Today)
+                ? new TimeSpan(now.Hour, (now.Minute / 15) * 15, 0)
+                : new TimeSpan(9, 0, 0);
+            EndTime = StartTime.Add(TimeSpan.FromHours(1));
 
+            SelectedColor = "#1976D2";
+
+            // >>> eerst initialiseren
+            Techniques = new ObservableCollection<TechniqueScoreModel>();
             OpponentNotes = new ObservableCollection<OpponentNoteModel>();
-            Judokas = new ObservableCollection<JudokaModel>();
             Categories = new ObservableCollection<string>();
+            Judokas = new ObservableCollection<JudokaModel>();
+
+            // optioneel: startwaarde; setter zet dit zelf naar 0 als niet Randori
+            RandoriCount = 1;
+
+            // >>> pas nu SelectedType zetten (triggert setter veilig)
+            SelectedType = TrainingTypes[0];
 
             SaveCommand = new Command(async () => await SaveAsync(), () => !IsBusy);
-            IncrementCommand = new Command<TechniqueScoreModel>(t =>
-            {
-                if (t == null) return;
-                t.ScoreCount++;
-                RefreshTechniques();
-            });
-            DecrementCommand = new Command<TechniqueScoreModel>(t =>
-            {
-                if (t == null) return;
-                if (t.ScoreCount > 0) t.ScoreCount--;
-                RefreshTechniques();
-            });
+            IncrementCommand = new Command<TechniqueScoreModel>(t => { if (t == null) return; t.ScoreCount++; RefreshTechniques(); });
+            DecrementCommand = new Command<TechniqueScoreModel>(t => { if (t == null) return; if (t.ScoreCount > 0) t.ScoreCount--; RefreshTechniques(); });
             AddOpponentCommand = new Command(AddOpponentNote, CanAddOpponentNote);
             RemoveOpponentCommand = new Command<OpponentNoteModel>(RemoveOpponentNote);
 
-            // laad categorieën + eventueel default judokas
             _ = InitCategoriesAsync();
         }
 
-        // ctor voor "Bewerk training"
-        public AddTrainingViewModel(IJudokaService judokaService, TrainingEntryModel trainingToEdit) : this(judokaService)
-        {
-            _editingId = trainingToEdit.Id;
-            Date = trainingToEdit.Date;
-            SelectedType = trainingToEdit.Type;
 
-            Techniques = new ObservableCollection<TechniqueScoreModel>(
-                trainingToEdit.TechniqueScores ?? new List<TechniqueScoreModel>()
-            );
-
-            OpponentNotes = new ObservableCollection<OpponentNoteModel>(
-                trainingToEdit.OpponentNotes ?? new List<OpponentNoteModel>()
-            );
-        }
-
-        // =========== Properties ===========
+        // ===== Datum & tijd =====
         private DateTime _date;
-        public DateTime Date
-        {
-            get => _date;
-            set { _date = value; OnPropertyChanged(); }
-        }
+        public DateTime Date { get => _date; set { _date = value; OnPropertyChanged(); } }
 
+        private TimeSpan _startTime;
+        public TimeSpan StartTime { get => _startTime; set { _startTime = value; OnPropertyChanged(); } }
+
+        private TimeSpan _endTime;
+        public TimeSpan EndTime { get => _endTime; set { _endTime = value; OnPropertyChanged(); } }
+
+        // ===== Kleur =====
+        private string _selectedColor = "#1976D2";
+        public string SelectedColor { get => _selectedColor; set { _selectedColor = value; OnPropertyChanged(); } }
+
+        // ===== Type & Randori =====
         public List<string> TrainingTypes { get; }
 
-        private string _selectedType;
+        private string _selectedType = string.Empty;
         public string SelectedType
         {
             get => _selectedType;
@@ -86,11 +111,52 @@ namespace Mde.Project.Mobile.ViewModels
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsRandori));
                 UpdateTechniques();
+
+                // extra bescherming
+                OpponentNotes ??= new ObservableCollection<OpponentNoteModel>();
+
+                if (IsRandori)
+                {
+                    if (RandoriCount < 1) RandoriCount = 1;
+                    EnsureOpponentNotesCount(RandoriCount);
+                }
+                else
+                {
+                    OpponentNotes.Clear();   // OpponentNotes is gegarandeerd niet-null
+                    RandoriCount = 0;
+                }
             }
         }
 
-        public bool IsRandori =>
-            SelectedType?.Equals("randori", StringComparison.OrdinalIgnoreCase) == true;
+
+        public bool IsRandori => SelectedType?.Equals("randori", StringComparison.OrdinalIgnoreCase) == true;
+
+        // RandoriCount
+        private int _randoriCount;
+        public int RandoriCount
+        {
+            get => _randoriCount;
+            set
+            {
+                var clamped = Math.Clamp(value, 0, 20);
+                if (_randoriCount == clamped) return;
+                _randoriCount = clamped;
+                OnPropertyChanged();
+                if (IsRandori) EnsureOpponentNotesCount(_randoriCount);
+            }
+        }
+
+        private void EnsureOpponentNotesCount(int count)
+        {
+            OpponentNotes ??= new ObservableCollection<OpponentNoteModel>();
+
+            if (count < 0) count = 0;
+            while (OpponentNotes.Count < count)
+                OpponentNotes.Add(new OpponentNoteModel { JudokaId = 0, Name = string.Empty, Comment = string.Empty });
+            while (OpponentNotes.Count > count)
+                OpponentNotes.RemoveAt(OpponentNotes.Count - 1);
+        }
+
 
         private ObservableCollection<TechniqueScoreModel> _techniques = new();
         public ObservableCollection<TechniqueScoreModel> Techniques
@@ -99,19 +165,31 @@ namespace Mde.Project.Mobile.ViewModels
             set { _techniques = value; OnPropertyChanged(); }
         }
 
+        private void UpdateTechniques()
+        {
+            Techniques = IsRandori ? DefaultRandoriTechniques()
+                                   : new ObservableCollection<TechniqueScoreModel>();
+        }
+
+        private static ObservableCollection<TechniqueScoreModel> DefaultRandoriTechniques() => new()
+        {
+            new TechniqueScoreModel { Technique = "Uchi Mata", ScoreCount = 0 },
+            new TechniqueScoreModel { Technique = "Seoi Nage", ScoreCount = 0 },
+            new TechniqueScoreModel { Technique = "Uki Goshi", ScoreCount = 0 }
+        };
+
+        private void RefreshTechniques() =>
+            Techniques = new ObservableCollection<TechniqueScoreModel>(Techniques);
+
+        // ===== Busy =====
         private bool _isBusyFlag;
         public bool IsBusy
         {
             get => _isBusyFlag;
-            set
-            {
-                _isBusyFlag = value;
-                OnPropertyChanged();
-                (SaveCommand as Command)?.ChangeCanExecute();
-            }
+            set { _isBusyFlag = value; OnPropertyChanged(); (SaveCommand as Command)?.ChangeCanExecute(); }
         }
 
-        // ====== Judokas & categorieën ======
+        // ===== Judokas & categorieën =====
         public ObservableCollection<string> Categories { get; }
         private string? _selectedCategory;
         public string? SelectedCategory
@@ -131,57 +209,187 @@ namespace Mde.Project.Mobile.ViewModels
         public JudokaModel? SelectedJudoka
         {
             get => _selectedJudoka;
-            set
-            {
-                _selectedJudoka = value;
-                OnPropertyChanged();
-                ((Command)AddOpponentCommand).ChangeCanExecute();
-            }
+            set { _selectedJudoka = value; OnPropertyChanged(); (AddOpponentCommand as Command)?.ChangeCanExecute(); }
         }
 
         private string _opponentComment = string.Empty;
         public string OpponentComment
         {
             get => _opponentComment;
-            set
-            {
-                _opponentComment = value;
-                OnPropertyChanged();
-                ((Command)AddOpponentCommand).ChangeCanExecute();
-            }
+            set { _opponentComment = value; OnPropertyChanged(); (AddOpponentCommand as Command)?.ChangeCanExecute(); }
         }
 
         public ObservableCollection<OpponentNoteModel> OpponentNotes { get; private set; }
 
-        // =========== Commands ===========
+        // ===== Commands =====
         public ICommand SaveCommand { get; }
         public ICommand IncrementCommand { get; }
         public ICommand DecrementCommand { get; }
         public ICommand AddOpponentCommand { get; }
         public ICommand RemoveOpponentCommand { get; }
 
-        private bool CanAddOpponentNote() =>
-            IsRandori && SelectedJudoka != null && !string.IsNullOrWhiteSpace(OpponentComment);
-
+        // ===== Opponent helpers =====
         private void AddOpponentNote()
         {
-            if (!CanAddOpponentNote()) return;
+            if (SelectedJudoka == null) return;
             OpponentNotes.Add(new OpponentNoteModel
             {
-                JudokaId = SelectedJudoka!.Id,
-                Name = SelectedJudoka!.FullName,
-                Comment = OpponentComment.Trim()
+                JudokaId = SelectedJudoka.Id,
+                Name = SelectedJudoka.FullName,
+                Comment = OpponentComment ?? string.Empty
             });
             OpponentComment = string.Empty;
+            OnPropertyChanged(nameof(OpponentComment));
+            (AddOpponentCommand as Command)?.ChangeCanExecute();
+            RandoriCount = OpponentNotes.Count; // UI sync
         }
+
+        private bool CanAddOpponentNote() =>
+            SelectedJudoka != null && !string.IsNullOrWhiteSpace(OpponentComment);
 
         private void RemoveOpponentNote(OpponentNoteModel? note)
         {
             if (note == null) return;
             OpponentNotes.Remove(note);
+            RandoriCount = OpponentNotes.Count; // UI sync
         }
 
-        // =========== Data laad helpers ===========
+        // ===== Opslaan (incl. herhaling) =====
+        private async Task SaveAsync()
+        {
+            if (IsBusy) return;
+            IsBusy = true;
+
+            try
+            {
+                var startDateTime = Date.Date.Add(StartTime);
+                var endDateTime = Date.Date.Add(EndTime);
+                if (endDateTime <= startDateTime) endDateTime = startDateTime.AddHours(1);
+
+                var all = await LoadFromLocalAsync() ?? new List<TrainingEntryModel>();
+                int nextId = (all.Count == 0) ? 1 : all.Max(t => t.Id) + 1;
+
+                void AddOne(DateTime s, DateTime e, bool copyRandori)
+                {
+                    var entry = new TrainingEntryModel
+                    {
+                        Id = nextId++,
+                        Date = s,
+                        EndDate = e,
+                        Type = SelectedType,
+                        Comment = string.Empty,
+                        TechniqueScores = copyRandori ? Techniques.ToList()
+                                                      : (IsRandori ? new List<TechniqueScoreModel>() : Techniques.ToList()),
+                        Attachments = new(),
+                        OpponentNotes = (copyRandori && IsRandori) ? OpponentNotes.ToList()
+                                                                   : new List<OpponentNoteModel>(),
+                        Color = SelectedColor
+                    };
+                    all.Insert(0, entry);
+                }
+
+                // Primair item
+                AddOne(startDateTime, endDateTime, copyRandori: true);
+
+                // Reeks (30 dagen vooruit)
+                if (!string.Equals(SelectedRecurrence, "Geen", StringComparison.OrdinalIgnoreCase))
+                {
+                    var repeatDays = BuildRepeatDaysArray(SelectedRecurrence, startDateTime.DayOfWeek,
+                        MondaySelected, TuesdaySelected, WednesdaySelected, ThursdaySelected, FridaySelected, SaturdaySelected, SundaySelected);
+
+                    var duration = endDateTime - startDateTime;
+                    for (int i = 1; i <= 30; i++)
+                    {
+                        var d = startDateTime.Date.AddDays(i);
+                        if (!repeatDays[DayOfWeekToIndex(d.DayOfWeek)]) continue;
+
+                        var s = d + startDateTime.TimeOfDay;
+                        var e = s + duration;
+                        AddOne(s, e, copyRandori: false); // geen opponent-copy voor toekomstige dagen
+                    }
+                }
+
+                await SaveToLocalAsync(all);
+                await Application.Current!.MainPage!.DisplayAlert("Opgeslagen", "Training bewaard.", "OK");
+                await Application.Current!.MainPage!.Navigation.PopAsync();
+            }
+            catch (Exception ex)
+            {
+                await Application.Current!.MainPage!.DisplayAlert("Fout", $"Kon training niet opslaan: {ex.Message}", "OK");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        private static bool[] BuildRepeatDaysArray(string recurrence, DayOfWeek startDay,
+            bool mon, bool tue, bool wed, bool thu, bool fri, bool sat, bool sun)
+        {
+            var days = new bool[7];
+            if (string.Equals(recurrence, "Dagelijks", StringComparison.OrdinalIgnoreCase))
+            {
+                for (int i = 0; i < 7; i++) days[i] = true;
+            }
+            else if (string.Equals(recurrence, "Wekelijks", StringComparison.OrdinalIgnoreCase))
+            {
+                days[DayOfWeekToIndex(startDay)] = true;
+            }
+            else if (string.Equals(recurrence, "Specifieke dagen", StringComparison.OrdinalIgnoreCase))
+            {
+                days[0] = mon; days[1] = tue; days[2] = wed; days[3] = thu;
+                days[4] = fri; days[5] = sat; days[6] = sun;
+            }
+            return days;
+        }
+
+        private static int DayOfWeekToIndex(DayOfWeek d) => d switch
+        {
+            DayOfWeek.Monday => 0,
+            DayOfWeek.Tuesday => 1,
+            DayOfWeek.Wednesday => 2,
+            DayOfWeek.Thursday => 3,
+            DayOfWeek.Friday => 4,
+            DayOfWeek.Saturday => 5,
+            DayOfWeek.Sunday => 6,
+            _ => 0
+        };
+
+        // ===== Lokale opslag =====
+        private static string LocalPath()
+        {
+            var dir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            return Path.Combine(dir, LocalFileName);
+        }
+
+        private static async Task<List<TrainingEntryModel>?> LoadFromLocalAsync()
+        {
+            try
+            {
+                var path = LocalPath();
+                if (!File.Exists(path)) return new List<TrainingEntryModel>();
+                using var stream = File.OpenRead(path);
+                return await JsonSerializer.DeserializeAsync<List<TrainingEntryModel>>(stream,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            catch
+            {
+                return new List<TrainingEntryModel>();
+            }
+        }
+
+        private static async Task SaveToLocalAsync(List<TrainingEntryModel> list)
+        {
+            var path = LocalPath();
+            var dir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+
+            await using var stream = File.Create(path);
+            await JsonSerializer.SerializeAsync(stream, list, new JsonSerializerOptions { WriteIndented = true });
+        }
+
+        // ===== Categorie/Judoka helpers =====
         private async Task InitCategoriesAsync()
         {
             try
@@ -189,8 +397,7 @@ namespace Mde.Project.Mobile.ViewModels
                 var cats = await _judokaService.GetCategoriesAsync();
                 Categories.Clear();
                 foreach (var c in cats) Categories.Add(c);
-                if (Categories.Count > 0)
-                    SelectedCategory = Categories[0]; // trigger judokas load
+                if (Categories.Count > 0) SelectedCategory = Categories[0];
             }
             catch (Exception ex)
             {
@@ -205,10 +412,7 @@ namespace Mde.Project.Mobile.ViewModels
                 if (string.IsNullOrWhiteSpace(SelectedCategory)) return;
                 var list = await _judokaService.GetJudokasByCategoryAsync(SelectedCategory);
                 Judokas.Clear();
-                if (list != null)
-                {
-                    foreach (var j in list) Judokas.Add(j);
-                }
+                if (list != null) foreach (var j in list) Judokas.Add(j);
             }
             catch (Exception ex)
             {
@@ -216,98 +420,17 @@ namespace Mde.Project.Mobile.ViewModels
             }
         }
 
-        // =========== Save ===========
-        private async Task SaveAsync()
-        {
-            if (IsBusy) return;
-            IsBusy = true;
-
-            try
-            {
-                var all = await LoadFromLocalAsync() ?? new List<TrainingEntryModel>();
-
-                if (_editingId.HasValue)
-                {
-                    var existing = all.FirstOrDefault(t => t.Id == _editingId.Value);
-                    if (existing != null)
-                    {
-                        existing.Date = Date;
-                        existing.Type = SelectedType;
-                        existing.TechniqueScores = Techniques.ToList();
-                        existing.OpponentNotes = OpponentNotes.ToList();
-                    }
-                }
-                else
-                {
-                    int nextId = (all.Count == 0) ? 1 : all.Max(t => t.Id) + 1;
-                    var entry = new TrainingEntryModel
-                    {
-                        Id = nextId,
-                        Date = Date,
-                        Type = SelectedType,
-                        Comment = string.Empty,
-                        TechniqueScores = Techniques.ToList(),
-                        Attachments = new(),
-                        OpponentNotes = OpponentNotes.ToList()
-                    };
-                    all.Insert(0, entry);
-                }
-
-                await SaveToLocalAsync(all);
-                await Application.Current?.MainPage?.DisplayAlert("Opgeslagen", "Training bewaard.", "OK");
-                await Application.Current!.MainPage!.Navigation.PopAsync();
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-
-        // =========== Helpers ===========
-        private void UpdateTechniques()
-        {
-            Techniques = IsRandori ? DefaultRandoriTechniques()
-                                   : new ObservableCollection<TechniqueScoreModel>();
-        }
-
-        private static ObservableCollection<TechniqueScoreModel> DefaultRandoriTechniques() =>
-            new()
-            {
-                new TechniqueScoreModel { Technique = "Uchi Mata", ScoreCount = 0 },
-                new TechniqueScoreModel { Technique = "Seoi Nage", ScoreCount = 0 },
-                new TechniqueScoreModel { Technique = "Uki Goshi", ScoreCount = 0 }
-            };
-
-        private void RefreshTechniques()
-        {
-            Techniques = new ObservableCollection<TechniqueScoreModel>(Techniques);
-        }
-
-        private string LocalPath => Path.Combine(FileSystem.AppDataDirectory, LocalFileName);
-
-        private async Task SaveToLocalAsync(List<TrainingEntryModel> list)
-        {
-            var json = JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = false });
-            await File.WriteAllTextAsync(LocalPath, json);
-        }
-
-        private async Task<List<TrainingEntryModel>?> LoadFromLocalAsync()
-        {
-            try
-            {
-                if (!File.Exists(LocalPath)) return null;
-                var json = await File.ReadAllTextAsync(LocalPath);
-                return JsonSerializer.Deserialize<List<TrainingEntryModel>>(json);
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
+        // ===== INotifyPropertyChanged =====
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? name = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+        private bool Set<T>(ref T field, T value, [CallerMemberName] string? name = null)
+        {
+            if (Equals(field, value)) return false;
+            field = value;
+            OnPropertyChanged(name);
+            return true;
+        }
     }
 }
-//fix

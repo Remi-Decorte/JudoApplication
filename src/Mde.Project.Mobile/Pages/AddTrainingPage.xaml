@@ -8,10 +8,24 @@
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="16" BackgroundColor="LightGray">
 
-            <!-- Datum -->
+            <!-- Datum & Tijd -->
             <VerticalStackLayout BackgroundColor="White" Padding="12" Spacing="6">
-                <Label Text="Datum" FontAttributes="Bold"/>
-                <DatePicker Date="{Binding Date}"/>
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                    <VerticalStackLayout>
+                        <Label Text="Datum" FontAttributes="Bold"/>
+                        <DatePicker Date="{Binding Date}"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Column="1">
+                        <Label Text="Start" FontAttributes="Bold"/>
+                        <TimePicker Time="{Binding StartTime}"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Column="2">
+                        <Label Text="Einde" FontAttributes="Bold"/>
+                        <TimePicker Time="{Binding EndTime}"/>
+                    </VerticalStackLayout>
+                </Grid>
             </VerticalStackLayout>
 
             <!-- Type -->
@@ -20,25 +34,66 @@
                 <Picker ItemsSource="{Binding TrainingTypes}" SelectedItem="{Binding SelectedType}"/>
             </VerticalStackLayout>
 
-            <!-- Technieken (alleen bij randori zichtbaar) -->
-            <VerticalStackLayout IsVisible="{Binding IsRandori}" BackgroundColor="White" Padding="12" Spacing="8">
-                <Label Text="Technieken and scores" FontAttributes="Bold"/>
-                <CollectionView ItemsSource="{Binding Techniques}">
+            <!-- Randori: count + spelers + comment -->
+            <VerticalStackLayout IsVisible="{Binding IsRandori}" BackgroundColor="White" Padding="12" Spacing="6">
+                <Label Text="Randori details" FontAttributes="Bold" />
+                <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
+                    <Label Text="Aantal randori's:" VerticalOptions="Center" />
+                    <Label Text="{Binding RandoriCount}" FontAttributes="Bold" VerticalOptions="Center" />
+                    <Stepper Minimum="1" Maximum="20" Increment="1" Value="{Binding RandoriCount}" />
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
+                    <Label Text="Categorie:" VerticalOptions="Center" />
+                    <Picker ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" />
+                </HorizontalStackLayout>
+
+                <CollectionView ItemsSource="{Binding OpponentNotes}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" Padding="4">
-                                <Label Text="{Binding Technique}" VerticalOptions="Center"/>
-                                <Button Grid.Column="1" Text="-"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DecrementCommand}"
-                                        CommandParameter="{Binding .}" />
-                                <Label Grid.Column="2" Text="{Binding ScoreCount}" VerticalOptions="Center" HorizontalTextAlignment="Center" />
-                                <Button Grid.Column="3" Text="+"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.IncrementCommand}"
-                                        CommandParameter="{Binding .}" />
+                            <Grid ColumnDefinitions="*,2*" Padding="4">
+                                <Picker
+                                    ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.Judokas}"
+                                    ItemDisplayBinding="{Binding FullName}"
+                                    SelectedIndexChanged="OnOpponentSelected" />
+                                <Entry Grid.Column="1" Text="{Binding Comment}" Placeholder="Commentaar" />
                             </Grid>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
+            </VerticalStackLayout>
+
+            <!-- Kleur -->
+            <VerticalStackLayout BackgroundColor="White" Padding="12" Spacing="8">
+                <Label Text="Kleur" FontAttributes="Bold" />
+                <HorizontalStackLayout Spacing="12">
+                    <Button x:Name="C1" WidthRequest="36" HeightRequest="36" CornerRadius="18" BackgroundColor="#1976D2" Clicked="OnColorButtonClicked" />
+                    <Button x:Name="C2" WidthRequest="36" HeightRequest="36" CornerRadius="18" BackgroundColor="#2E7D32" Clicked="OnColorButtonClicked" />
+                    <Button x:Name="C3" WidthRequest="36" HeightRequest="36" CornerRadius="18" BackgroundColor="#F57C00" Clicked="OnColorButtonClicked" />
+                    <Button x:Name="C4" WidthRequest="36" HeightRequest="36" CornerRadius="18" BackgroundColor="#8E24AA" Clicked="OnColorButtonClicked" />
+                    <Button x:Name="C5" WidthRequest="36" HeightRequest="36" CornerRadius="18" BackgroundColor="#D32F2F" Clicked="OnColorButtonClicked" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+
+            <!-- Herhaling -->
+            <VerticalStackLayout BackgroundColor="White" Padding="12" Spacing="6">
+                <Label Text="Herhaling" FontAttributes="Bold" />
+                <Picker Title="Geen herhaling" ItemsSource="{Binding RecurrenceOptions}" SelectedItem="{Binding SelectedRecurrence}" />
+                <HorizontalStackLayout IsVisible="{Binding IsCustomRecurrence}" Spacing="0" VerticalOptions="Center">
+                    <CheckBox IsChecked="{Binding MondaySelected}" />
+                    <Label Text="Ma" Margin="0,0,16,0"/>
+                    <CheckBox IsChecked="{Binding TuesdaySelected}" />
+                    <Label Text="Di" Margin="0,0,16,0"/>
+                    <CheckBox IsChecked="{Binding WednesdaySelected}" />
+                    <Label Text="Wo" Margin="0,0,16,0"/>
+                    <CheckBox IsChecked="{Binding ThursdaySelected}" />
+                    <Label Text="Do" Margin="0,0,16,0"/>
+                    <CheckBox IsChecked="{Binding FridaySelected}" />
+                    <Label Text="Vr" Margin="0,0,16,0"/>
+                    <CheckBox IsChecked="{Binding SaturdaySelected}" />
+                    <Label Text="Za" Margin="0,0,16,0"/>
+                    <CheckBox IsChecked="{Binding SundaySelected}" />
+                    <Label Text="Zo" />
+                </HorizontalStackLayout>
             </VerticalStackLayout>
 
             <!-- Opslaan -->
@@ -47,7 +102,6 @@
                     BackgroundColor="#FBBF24"
                     TextColor="Black"
                     FontAttributes="Bold"/>
-
             <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
 
         </VerticalStackLayout>

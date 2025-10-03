@@ -3,212 +3,80 @@
     x:Class="Mde.Project.Mobile.Pages.AgendaPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    x:Name="AgendaPageRoot"
-    Title="Mijn Agenda">
+    xmlns:scheduler="http://schemas.syncfusion.com/maui"
+    Title="Mijn Agenda"
+    BackgroundColor="#F8F9FA">
 
-    <Grid RowDefinitions="Auto,*" Padding="16" BackgroundColor="LightGray">
+    <Grid RowDefinitions="Auto,Auto,*" Padding="0">
 
         <!-- Header -->
-        <HorizontalStackLayout Spacing="12">
-            <Label Text="Trainingen"
-                   FontSize="24"
-                   FontAttributes="Bold"
-                   VerticalOptions="Center" />
+        <Frame Grid.Row="0" Padding="20,16" CornerRadius="0" HasShadow="False" BackgroundColor="#0078D4">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+                <Label Text="Mijn Agenda"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       TextColor="White"
+                       VerticalOptions="Center" />
+                <Button Grid.Column="1"
+                        Text="Vandaag"
+                        Command="{Binding GoToTodayCommand}"
+                        BackgroundColor="White"
+                        TextColor="#0078D4"
+                        CornerRadius="20"
+                        Padding="16,8"
+                        FontAttributes="Bold" />
+                <Button Grid.Column="2"
+                        Text="+ Nieuw"
+                        Command="{Binding NewEntryCommand}"
+                        BackgroundColor="White"
+                        TextColor="#0078D4"
+                        CornerRadius="20"
+                        Padding="16,8"
+                        FontAttributes="Bold" />
+            </Grid>
+        </Frame>
 
-            <Button Text="+ Training"
-                    SemanticProperties.Description="Nieuwe training toevoegen"
-                    HorizontalOptions="EndAndExpand"
-                    Clicked="OnAddTrainingClicked"
-                    BackgroundColor="#FBBF24"
-                    TextColor="Black"
-                    FontAttributes="Bold" />
-        </HorizontalStackLayout>
+        <!-- Navigatie + View dropdown -->
+        <Frame Grid.Row="1" Padding="12" CornerRadius="0" HasShadow="False" BackgroundColor="White" Margin="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                <Button Grid.Column="0"
+                        Text="Vorige"
+                        Command="{Binding PreviousPeriodCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="#0078D4"
+                        Padding="8,4" />
+                <Picker Grid.Column="1"
+                        Title="Weergave"
+                        ItemsSource="{Binding ViewModes}"
+                        SelectedItem="{Binding SelectedViewMode}"
+                        WidthRequest="130"
+                        FontSize="14"
+                        HorizontalOptions="Start" />
+                <Label Grid.Column="2"
+                       Text="{Binding CurrentPeriodTitle}"
+                       FontAttributes="Bold"
+                       FontSize="16"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       LineBreakMode="TailTruncation" />
+                <Button Grid.Column="3"
+                        Text="Volgende"
+                        Command="{Binding NextPeriodCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="#0078D4"
+                        Padding="8,4" />
+            </Grid>
+        </Frame>
 
-        <!-- Body -->
-        <Grid Grid.Row="1" RowDefinitions="*,Auto" RowSpacing="12">
-
-            <!-- Lijst met trainingen -->
-            <CollectionView Grid.Row="0"
-                            ItemsSource="{Binding Trainings}"
-                            SelectedItem="{Binding SelectedTraining, Mode=TwoWay}"
-                            SelectionMode="Single">
-
-                <CollectionView.EmptyView>
-                    <VerticalStackLayout Padding="24" Spacing="8"
-                                         HorizontalOptions="Center"
-                                         VerticalOptions="Center">
-                        <Label Text="Nog geen trainingen"
-                               FontAttributes="Bold"
-                               HorizontalTextAlignment="Center"/>
-                        <Label Text="Klik op “+ Training” om je eerste item toe te voegen."
-                               FontSize="12"
-                               TextColor="Gray"
-                               HorizontalTextAlignment="Center"/>
-                    </VerticalStackLayout>
-                </CollectionView.EmptyView>
-
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Frame Margin="6" Padding="12"
-                               CornerRadius="12"
-                               HasShadow="True"
-                               BackgroundColor="White">
-
-                            <!-- Hele kaart klikbaar -->
-                            <Frame.GestureRecognizers>
-                                <TapGestureRecognizer
-                                    Command="{Binding BindingContext.SelectTrainingCommand, Source={x:Reference AgendaPageRoot}}"
-                                    CommandParameter="{Binding .}" />
-                            </Frame.GestureRecognizers>
-
-                            <!-- Highlight geselecteerd item -->
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualState x:Name="Normal">
-                                        <VisualState.Setters>
-                                            <Setter Property="BackgroundColor" Value="White" />
-                                            <Setter Property="BorderColor" Value="Transparent" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Selected">
-                                        <VisualState.Setters>
-                                            <Setter Property="BackgroundColor" Value="#FFFDE7" />
-                                            <Setter Property="BorderColor" Value="#FBBF24" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-
-                            <Grid ColumnDefinitions="Auto,*"
-                                  RowDefinitions="Auto,Auto,Auto">
-
-                                <!-- Datum -->
-                                <Label Grid.Row="0" Grid.Column="0"
-                                       Text="{Binding Date, StringFormat='{}{0:dd/MM/yyyy}'}"
-                                       FontAttributes="Bold" />
-
-                                <!-- Type -->
-                                <Label Grid.Row="1" Grid.Column="0"
-                                       Text="{Binding Type}"
-                                       TextColor="Gray" />
-
-                                <!-- Aantal technieken rechts uitgelijnd -->
-                                <Label Grid.Row="0" Grid.Column="1"
-                                       Grid.RowSpan="2"
-                                       HorizontalTextAlignment="End"
-                                       Text="{Binding TechniqueScores.Count, StringFormat='Technieken: {0}'}"/>
-
-                                <!-- Comment (optioneel zichtbaar) -->
-                                <Label Grid.Row="2" Grid.ColumnSpan="2"
-                                       Text="{Binding Comment}"
-                                       FontSize="12"
-                                       TextColor="DimGray"
-                                       LineBreakMode="WordWrap"/>
-                            </Grid>
-                        </Frame>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-
-            <!-- Comment invoer + spraakbediening + quick foto + thumbnails + SAVE -->
-            <Frame Grid.Row="1"
-                   Padding="12"
-                   CornerRadius="12"
-                   HasShadow="True"
-                   BackgroundColor="White">
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="Commentaar voor geselecteerde training"
-                           FontAttributes="Bold" />
-
-                    <!-- Info over de selectie -->
-                    <Label>
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="Geselecteerd: " FontAttributes="Bold"/>
-                                <Span Text="{Binding SelectedTraining.Date, StringFormat='{}{0:dd/MM/yyyy}'}"/>
-                                <Span Text="  •  "/>
-                                <Span Text="{Binding SelectedTraining.Type}"/>
-                            </FormattedString>
-                        </Label.FormattedText>
-                    </Label>
-
-                    <!-- Dictation status -->
-                    <Label Text="Aan het luisteren..."
-                           TextColor="Green"
-                           FontAttributes="Italic"
-                           IsVisible="{Binding IsListening}"/>
-
-                    <!-- Comment editor -->
-                    <Editor Text="{Binding NewComment}"
-                            AutoSize="TextChanges"
-                            Placeholder="Typ of spreek je comment hier..." />
-
-                    <!-- 🔹 Thumbnails van gekoppelde foto's -->
-                    <CollectionView ItemsSource="{Binding SelectedTraining.Attachments}"
-                                    HeightRequest="96"
-                                    Margin="0,4,0,0">
-                        <CollectionView.ItemsLayout>
-                            <LinearItemsLayout Orientation="Horizontal" />
-                        </CollectionView.ItemsLayout>
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate>
-                                <Frame Padding="4" Margin="4"
-                                       CornerRadius="10"
-                                       HasShadow="False"
-                                       BorderColor="#DDDDDD">
-                                    <Image WidthRequest="80" HeightRequest="80"
-                                           Aspect="AspectFill"
-                                           Source="{Binding Uri}" />
-                                </Frame>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-
-                    <!-- Acties (wrap + marges i.p.v. Row/ColumnGap) -->
-                    <FlexLayout Direction="Row"
-                                Wrap="Wrap"
-                                JustifyContent="Start"
-                                AlignItems="Center"
-                                AlignContent="Start">
-
-                        <!-- Start dicteren -->
-                        <Button Text="🎤 Inspreken"
-                                Command="{Binding StartDictationCommand}"
-                                BackgroundColor="#34D399"
-                                TextColor="Black"
-                                Margin="0,0,8,8" />
-
-                        <!-- Stop dicteren -->
-                        <Button Text="■ Stop"
-                                Command="{Binding StopDictationCommand}"
-                                Margin="0,0,8,8" />
-
-                        <!-- Snel foto lokaal -->
-                        <Button Text="📸 Snel foto (lokaal)"
-                                Command="{Binding QuickShotCommand}"
-                                Margin="0,0,8,8" />
-
-                        <!-- SAVE (persist lokaal) -->
-                        <Button Text="Save"
-                                Command="{Binding SaveCommentCommand}"
-                                BackgroundColor="#2563EB"
-                                TextColor="White"
-                                FontAttributes="Bold"
-                                Margin="0,0,8,8" />
-
-                        <!-- Bewerk training -->
-                        <Button Text="✏️ Bewerk training"
-                                Command="{Binding EditTrainingCommand}"
-                                BackgroundColor="#F59E0B"
-                                TextColor="White"
-                                FontAttributes="Bold"
-                                Margin="0,0,8,8" />
-
-                    </FlexLayout>
-
-                </VerticalStackLayout>
-            </Frame>
+        <!-- Scheduler -->
+        <Grid Grid.Row="2" Padding="12">
+            <scheduler:SfScheduler x:Name="Scheduler"
+                                   View="{Binding SchedulerView}"
+                                   FirstDayOfWeek="Monday"
+                                   DisplayDate="{Binding DisplayDate, Mode=TwoWay}"
+                                   SelectedDate="{Binding SelectedDate, Mode=TwoWay}"
+                                   AppointmentsSource="{Binding Appointments}"
+                                   Tapped="Scheduler_Tapped" />
         </Grid>
     </Grid>
 </ContentPage>
-
