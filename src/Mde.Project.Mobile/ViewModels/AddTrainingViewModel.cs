@@ -52,7 +52,6 @@ namespace Mde.Project.Mobile.ViewModels
 
             Date = DateTime.Today;
             TrainingTypes = new() { "Techniek", "Conditioneel", "Wedstrijdvoorbereiding", "Herstel", "Randori" };
-            SelectedType = TrainingTypes[0];
 
             var now = DateTime.Now;
             StartTime = (Date.Date == DateTime.Today)
@@ -60,17 +59,19 @@ namespace Mde.Project.Mobile.ViewModels
                 : new TimeSpan(9, 0, 0);
             EndTime = StartTime.Add(TimeSpan.FromHours(1));
 
-            SelectedColor = "#1976D2"; // commit 3
+            SelectedColor = "#1976D2";
 
+            // >>> eerst initialiseren
             Techniques = new ObservableCollection<TechniqueScoreModel>();
             OpponentNotes = new ObservableCollection<OpponentNoteModel>();
-
-            // Enkele, juiste declaraties:
             Categories = new ObservableCollection<string>();
             Judokas = new ObservableCollection<JudokaModel>();
 
-            // Standaard bij randori: 1 item
+            // optioneel: startwaarde; setter zet dit zelf naar 0 als niet Randori
             RandoriCount = 1;
+
+            // >>> pas nu SelectedType zetten (triggert setter veilig)
+            SelectedType = TrainingTypes[0];
 
             SaveCommand = new Command(async () => await SaveAsync(), () => !IsBusy);
             IncrementCommand = new Command<TechniqueScoreModel>(t => { if (t == null) return; t.ScoreCount++; RefreshTechniques(); });
@@ -80,6 +81,7 @@ namespace Mde.Project.Mobile.ViewModels
 
             _ = InitCategoriesAsync();
         }
+
 
         // ===== Datum & tijd =====
         private DateTime _date;
@@ -110,6 +112,9 @@ namespace Mde.Project.Mobile.ViewModels
                 OnPropertyChanged(nameof(IsRandori));
                 UpdateTechniques();
 
+                // extra bescherming
+                OpponentNotes ??= new ObservableCollection<OpponentNoteModel>();
+
                 if (IsRandori)
                 {
                     if (RandoriCount < 1) RandoriCount = 1;
@@ -117,11 +122,12 @@ namespace Mde.Project.Mobile.ViewModels
                 }
                 else
                 {
-                    OpponentNotes.Clear();
+                    OpponentNotes.Clear();   // OpponentNotes is gegarandeerd niet-null
                     RandoriCount = 0;
                 }
             }
         }
+
 
         public bool IsRandori => SelectedType?.Equals("randori", StringComparison.OrdinalIgnoreCase) == true;
 
@@ -142,12 +148,15 @@ namespace Mde.Project.Mobile.ViewModels
 
         private void EnsureOpponentNotesCount(int count)
         {
+            OpponentNotes ??= new ObservableCollection<OpponentNoteModel>();
+
             if (count < 0) count = 0;
             while (OpponentNotes.Count < count)
                 OpponentNotes.Add(new OpponentNoteModel { JudokaId = 0, Name = string.Empty, Comment = string.Empty });
             while (OpponentNotes.Count > count)
                 OpponentNotes.RemoveAt(OpponentNotes.Count - 1);
         }
+
 
         private ObservableCollection<TechniqueScoreModel> _techniques = new();
         public ObservableCollection<TechniqueScoreModel> Techniques
